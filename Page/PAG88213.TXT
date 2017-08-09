@@ -1,0 +1,310 @@
+OBJECT Page 88213 Det. Op. Intracomunitarias SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=20/07/17;
+    Time=23:41:08;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII certain intra-community op.;
+               ESP=Det. Op. Intracomunitarias SII];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=Yes;
+    SourceTable=Table88208;
+    SourceTableView=SORTING(TipoSII,Bien de inversion,Tipo,Documento,Fecha)
+                    WHERE(TipoSII=FILTER(E|R),
+                          Tipo=CONST(OpInt));
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1000000011;  ;ActionContainer;
+                      Name=SII;
+                      ActionContainerType=ActionItems }
+      { 1000000016;1 ;Action    ;
+                      Name=Enviar;
+                      Image=SendTo;
+                      OnAction=BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 CfgSII."Agrupar env¡os" := FALSE;
+
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   DT := CURRENTDATETIME;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     tmpDocSII.NMov := qRec.NMov;
+                                     tmpDocSII.INSERT;
+                                   UNTIL qRec.NEXT = 0;
+                                   IF CfgSII."Agrupar env¡os" THEN
+                                     FunSII.EnviarOpIntracAgrupados(tmpDocSII)
+                                   ELSE
+                                     FileName := FunSII.GenXMLOpIntracAgrupados(tmpDocSII, 2);
+                                     IF FileName <> '' THEN
+                                       MESSAGE(Text002, FileName);
+                                 END ELSE BEGIN
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     FunSII.EnviarOpIntracomunitaria(qRec);
+                                   UNTIL qRec.NEXT = 0;
+                                 END;
+                               END;
+                                }
+      { 1000000035;1 ;Separator  }
+      { 1000000012;1 ;ActionGroup;
+                      Name=Consulta;
+                      Image=GetSourceDoc }
+      { 1000000044;2 ;Action    ;
+                      Name=Periodo;
+                      CaptionML=ESP=Periodo;
+                      Image=GetSourceDoc;
+                      OnAction=BEGIN
+                                 qRec := Rec;
+                                 qRec.NIF := '';
+                                 qRec.RazonSocial := '';
+                                 FunSII.ConOpIntracomunitaria(qRec);
+                               END;
+                                }
+      { 1000000045;2 ;Action    ;
+                      Name=Periodo y NIF;
+                      CaptionML=ESP=Periodo y NIF;
+                      Image=GetSourceDoc;
+                      OnAction=BEGIN
+                                 FunSII.ConOpIntracomunitaria(Rec);
+                               END;
+                                }
+      { 1000000034;1 ;Action    ;
+                      Name=Refrescar;
+                      Image=UpdateXML;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+
+                                 CurrPage.SETSELECTIONFILTER(qRec);
+                                 IF qRec.FIND('-') THEN  REPEAT
+                                   FunSII.RefrescarDocSII(qRec);
+                                 UNTIL qRec.NEXT = 0;
+                               END;
+                                }
+      { 1000000019;1 ;Separator  }
+      { 1000000031;1 ;Action    ;
+                      Name=Comprobar NIF;
+                      Image=User;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+
+                                 CurrPage.SETSELECTIONFILTER(qRec);
+                                 IF qRec.FIND('-') THEN  REPEAT
+                                   WebSII.CalidadDatos(qRec.NIF, qRec.RazonSocial, FALSE);
+                                 UNTIL qRec.NEXT = 0;
+                               END;
+                                }
+      { 1000000030;1 ;Separator  }
+      { 1000000020;1 ;Action    ;
+                      Name=Anular;
+                      Image=ReverseRegister;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 IF CONFIRM(Text001, FALSE) THEN BEGIN
+                                   DT := CURRENTDATETIME;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     FunSII.AnularOpIntracomunitaria(qRec, DT);
+                                   UNTIL qRec.NEXT = 0;
+                                 END;
+                               END;
+                                }
+      { 1000000013;1 ;ActionGroup;
+                      Name=XML }
+      { 1000000014;2 ;Action    ;
+                      Name=Ver;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     tmpDocSII.NMov := qRec.NMov;
+                                     tmpDocSII.INSERT;
+                                   UNTIL qRec.NEXT = 0;
+                                   FunSII.GenXMLOpIntracAgrupados(tmpDocSII, 0);
+                                 END  ELSE BEGIN
+                                   FunSII.GenerarXMLOpIntracomunitaria(Rec, FALSE);
+                                 END;
+                               END;
+                                }
+      { 1000000015;2 ;Action    ;
+                      Name=Exportar;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     tmpDocSII.NMov := qRec.NMov;
+                                     tmpDocSII.INSERT;
+                                   UNTIL qRec.NEXT = 0;
+                                   FunSII.GenXMLOpIntracAgrupados(tmpDocSII, 1);
+                                 END  ELSE BEGIN
+                                   FunSII.GenerarXMLOpIntracomunitaria(Rec, TRUE);
+                                 END;
+
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+                               END;
+                                }
+      { 1000000029;1 ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ESP=&Navegar];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate.SetDoc(Fecha,Documento);
+                                 Navigate.RUN;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Documento;
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=Fecha;
+                Editable=FALSE }
+
+    { 1000000033;2;Field  ;
+                SourceExpr="No enviar" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=NIF }
+
+    { 1000000005;2;Field  ;
+                SourceExpr=RazonSocial }
+
+    { 1000000006;2;Field  ;
+                SourceExpr=NumTercero }
+
+    { 1000000032;2;Field  ;
+                SourceExpr=IDOtro }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Cod. pais" }
+
+    { 1000000046;2;Field  ;
+                SourceExpr="Tipo operacion intracomu." }
+
+    { 1000000049;2;Field  ;
+                SourceExpr="Clave declarado intracomu." }
+
+    { 1000000050;2;Field  ;
+                SourceExpr="Identificacion Bien" }
+
+    { 1000000051;2;Field  ;
+                SourceExpr=DireccionOperador }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Estado env¡o" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Tipo envio" }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=Env¡os }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=TextoRegistro }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Timestamp presentaci¢n" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Tipo comunicaci¢n" }
+
+    { 1000000026;2;Field  ;
+                SourceExpr=CSV }
+
+    { 1000000036;2;Field  ;
+                SourceExpr="Estado cuadre";
+                Editable=FALSE }
+
+    { 1000000037;2;Field  ;
+                SourceExpr="Timestamp cuadre" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Codigo Error" }
+
+    { 1000000028;2;Field  ;
+                SourceExpr="Descripcion Error" }
+
+  }
+  CODE
+  {
+    VAR
+      FunSII@1000000000 : Codeunit 88201;
+      qEmpresa@1000000003 : Text[30];
+      Text001@1000000004 : TextConst 'ENU=Ejecutar proceso de anulaci¢n';
+      ProcesarMovsIVA@1000000001 : Report 88201;
+      Navigate@1000000002 : Page 344;
+      GlbSII@1000000005 : Codeunit 88200;
+      WebSII@1000000006 : Codeunit 88202;
+      CfgSII@1000000011 : Record 88201;
+      qRec@1000000010 : Record 88208;
+      tmpDocSII@1000000009 : TEMPORARY Record 88208;
+      DT@1000000008 : DateTime;
+      FileName@1000000007 : Text[1024];
+      Text002@1000000012 : TextConst 'ENU=File %1, created.;ESP=Fichero %1, creado.';
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,498 @@
+OBJECT Page 88207 Env¡os SII por Empresa lin.
+{
+  OBJECT-PROPERTIES
+  {
+    Date=16/07/17;
+    Time=12:41:04;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    Editable=Yes;
+    CaptionML=[ENU=SII sendings by company lin.;
+               ESP=Env¡os SII por Empresa lin.];
+    SaveValues=Yes;
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table2000000006;
+    PageType=List;
+    OnOpenPage=BEGIN
+                 PeriodType := PeriodType::Week;
+                 locCuenta.SETRANGE("Date Filter", TODAY-7, TODAY);
+
+                 IF DateFilter <> '' THEN
+                   locCuenta.SETFILTER("Date Filter",DateFilter);
+
+                 FindPeriod('');
+               END;
+
+    OnClosePage=BEGIN
+                  GlbSII.SetGblEmpresa('');
+                END;
+
+    OnFindRecord=BEGIN
+                   EXIT(FunSII.BuscaEmpresa(Which,Rec));
+                 END;
+
+    OnNextRecord=BEGIN
+                   EXIT(FunSII.SigEmpresa(Steps,Rec));
+                 END;
+
+    OnAfterGetRecord=BEGIN
+                       DefLoc;
+                     END;
+
+    ActionList=ACTIONS
+    {
+      { 1000000029;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000028;1 ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ESP=F&unciones];
+                      Image=Action }
+      { 1000000024;1 ;Action    ;
+                      CaptionML=[ENU=Next Period;
+                                 ESP=Periodo siguiente];
+                      ToolTipML=[ENU=Next Period;
+                                 ESP=Periodo siguiente];
+                      Promoted=Yes;
+                      Image=NextRecord;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 FindPeriod('>=');
+                                 DateFilter := locCuenta.GETFILTER("Date Filter");
+                               END;
+                                }
+      { 1000000023;1 ;Action    ;
+                      CaptionML=[ENU=Previous Period;
+                                 ESP=Periodo anterior];
+                      ToolTipML=[ENU=Previous Period;
+                                 ESP=Periodo anterior];
+                      Promoted=Yes;
+                      Image=PreviousRecord;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 FindPeriod('<=');
+                                 DateFilter := locCuenta.GETFILTER("Date Filter");
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000021;1;Group  ;
+                CaptionML=[ENU=General;
+                           ESP=General] }
+
+    { 1000000020;2;Field  ;
+                CaptionML=[ENU=View by;
+                           ESP=Ver por];
+                OptionCaptionML=[ENU=Day,Week,Month,Quarter,Year,Accounting Period;
+                                 ESP=D¡a,Semana,Mes,Trimestre,A¤o,Periodo contable];
+                SourceExpr=PeriodType;
+                Editable=TRUE;
+                OnValidate=BEGIN
+                             FindPeriod('');
+                             DateFilter := locCuenta.GETFILTER("Date Filter");
+                             CurrPage.UPDATE;
+                           END;
+                            }
+
+    { 1000000019;2;Field  ;
+                Name=DateFilter;
+                CaptionML=[ENU=Date Filter;
+                           ESP=Filtro fecha];
+                SourceExpr=DateFilter;
+                Editable=TRUE;
+                OnValidate=VAR
+                             ApplicationManagement@1002 : Codeunit 1;
+                           BEGIN
+                             IF ApplicationManagement.MakeDateFilter(DateFilter) = 0 THEN;
+                             locCuenta.SETFILTER("Date Filter",DateFilter);
+                             DateFilter := locCuenta.GETFILTER("Date Filter");
+                             CurrPage.UPDATE;
+                           END;
+                            }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                Editable=FALSE;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Name;
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                CaptionML=[ENU=VAT No.;
+                           ESP=NIF];
+                SourceExpr=NIF;
+                Editable=FALSE }
+
+    { 1000000004;2;Field  ;
+                Name=Certificado valido hasta;
+                CaptionML=[ENU=Certificate valid to;
+                           ESP=Certificado valido hasta];
+                SourceExpr=CertificadoHasta;
+                Editable=FALSE }
+
+    { 1000000005;2;Field  ;
+                Name=Documentos Emitidos;
+                CaptionML=[ENU=Issued documents;
+                           ESP=Documentos Emitidos];
+                BlankZero=Yes;
+                SourceExpr=numDocEmitidos;
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarDocEmitidos(Name);
+                            END;
+                             }
+
+    { 1000000007;2;Field  ;
+                Name=D.Emitidos enviados;
+                CaptionML=[ENU=Issued sent doc.;
+                           ESP=D.Emitidos enviados];
+                BlankZero=Yes;
+                SourceExpr=FVEnviadas[1];
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosEmitidos(Name, 0);
+                            END;
+                             }
+
+    { 1000000008;2;Field  ;
+                Name=D.Emitidos enviados Correctos;
+                CaptionML=[ENU=Issued sent correct doc.;
+                           ESP=D.Emitidos enviados Correctos];
+                BlankZero=Yes;
+                SourceExpr=FVEnviadas[2];
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosEmitidos(Name, 1);
+                            END;
+                             }
+
+    { 1000000009;2;Field  ;
+                Name=D.Emitidos enviados errores;
+                CaptionML=[ENU=Issued sent accepted with error doc.;
+                           ESP=D.Emitidos enviados Aceptados con Errores];
+                BlankZero=Yes;
+                SourceExpr=FVEnviadas[3];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosEmitidos(Name, 2);
+                            END;
+                             }
+
+    { 1000000010;2;Field  ;
+                Name=D.Emitidos enviados Incorrect;
+                CaptionML=[ENU=Issued sent incorrect doc.;
+                           ESP=D.Emitidos enviados Incorrectos];
+                BlankZero=Yes;
+                SourceExpr=FVEnviadas[4];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosEmitidos(Name, 3);
+                            END;
+                             }
+
+    { 1000000011;2;Field  ;
+                Name=D.Emitidos enviados con ERROR;
+                CaptionML=[ENU=Issued sent with ERROR doc.;
+                           ESP=D.Emitidos enviados con ERROR];
+                BlankZero=Yes;
+                SourceExpr=FVEnviadas[5];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosEmitidos(Name, 4);
+                            END;
+                             }
+
+    { 1000000012;2;Field  ;
+                Name=Documentos Recibidos;
+                CaptionML=[ENU=Received documents;
+                           ESP=Documentos Recibidos];
+                BlankZero=Yes;
+                SourceExpr=numDocRecibidos;
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarDocRecibidos(Name);
+                            END;
+                             }
+
+    { 1000000014;2;Field  ;
+                Name=D.Recibidos enviados;
+                CaptionML=[ENU=Received sent doc.;
+                           ESP=D.Recibidos enviados];
+                BlankZero=Yes;
+                SourceExpr=FCEnviadas[1];
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosRecibidos(Name, 0);
+                            END;
+                             }
+
+    { 1000000015;2;Field  ;
+                Name=D.Recibidos enviados Correctos;
+                CaptionML=[ENU=Received sent correct doc.;
+                           ESP=D.Recibidos enviados Correctos];
+                BlankZero=Yes;
+                SourceExpr=FCEnviadas[2];
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosRecibidos(Name, 1);
+                            END;
+                             }
+
+    { 1000000016;2;Field  ;
+                Name=D.Recibidos enviados  Errores;
+                CaptionML=[ENU=Received sent accepted with error doc.;
+                           ESP=D.Recibidos enviados Aceptados con Errores];
+                BlankZero=Yes;
+                SourceExpr=FCEnviadas[3];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosRecibidos(Name, 2);
+                            END;
+                             }
+
+    { 1000000017;2;Field  ;
+                Name=D.Recibidos enviados  Incorrec;
+                CaptionML=[ENU=Received sent incorrect doc.;
+                           ESP=D.Recibidos enviados Incorrectos];
+                BlankZero=Yes;
+                SourceExpr=FCEnviadas[4];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosRecibidos(Name, 3);
+                            END;
+                             }
+
+    { 1000000018;2;Field  ;
+                Name=D.Recibidos enviados con ERROR;
+                CaptionML=[ENU=Received sent with ERROR doc.;
+                           ESP=D.Recibidos enviados con ERROR];
+                BlankZero=Yes;
+                SourceExpr=FCEnviadas[5];
+                Editable=FALSE;
+                Style=Strong;
+                StyleExpr=TRUE;
+                OnDrillDown=BEGIN
+                              MostrarEnviosRecibidos(Name, 4);
+                            END;
+                             }
+
+  }
+  CODE
+  {
+    VAR
+      LongPeriodoProd@1000000026 : 'D¡a,Semana,Mes,Trimestre,A¤o,Periodo';
+      TipImporte@1000000025 : 'Saldo periodo,Acumulado hasta fecha';
+      TabDocSII@1000000039 : Record 88208;
+      numDocEmitidos@1000000013 : Integer;
+      locCuenta@1000000012 : Record 15;
+      FVEnviadas@1000000010 : ARRAY [5] OF Integer;
+      numDocRecibidos@1000000008 : Integer;
+      FCEnviadas@1000000007 : ARRAY [5] OF Integer;
+      NIF@1000000006 : Code[20];
+      CfgEmp@1000000005 : Record 79;
+      CertificadoHasta@1000000004 : Date;
+      CfgSII@1000000003 : Record 88201;
+      FunSII@1000000002 : Codeunit 88201;
+      GlbSII@1000000014 : Codeunit 88200;
+      DateFilter@1000000037 : Text[30];
+      PeriodType@1000000038 : 'Day,Week,Month,Quarter,Year,Accounting Period';
+      PageEmitidos@1000000000 : Page 88201;
+      PageRecibidos@1000000001 : Page 88209;
+
+    PROCEDURE Def@1000000000(VAR Cuenta@1000000002 : Record 15;LongPeriodoNueProd@1000000001 : Integer;NuevTipImpor@1000000000 : 'Saldo periodo,Acumulado hasta fecha');
+    BEGIN
+      locCuenta.COPYFILTERS(Cuenta);
+
+      LongPeriodoProd := LongPeriodoNueProd;
+      TipImporte := NuevTipImpor;
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE DefLoc@1000000001();
+    BEGIN
+      CambiarEmpresa(Name);
+      CalcularCampos(Name);
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE MostrarDocEmitidos@1000000002(NEmpresa@1000000000 : Text[30]);
+    BEGIN
+      DefLoc;
+      GlbSII.SetGblEmpresa(NEmpresa);
+      TabDocSII.RESET;
+      TabDocSII.SETCURRENTKEY(TipoSII,"Bien de inversion",Tipo,Documento,Fecha);
+      TabDocSII.SETFILTER(Fecha, locCuenta.GETFILTER("Date Filter"));
+      //PAGE.RUN(PAGE::"Documentos Emitidos SII",TabDocSII);
+
+      PageEmitidos.DefEmpresa(NEmpresa);
+      PageEmitidos.SETTABLEVIEW(TabDocSII);
+      PageEmitidos.RUN;
+      CLEAR(PageEmitidos);
+    END;
+
+    PROCEDURE MostrarDocRecibidos@1000000008(NEmpresa@1000000000 : Text[30]);
+    BEGIN
+      DefLoc;
+      GlbSII.SetGblEmpresa(NEmpresa);
+      TabDocSII.RESET;
+      TabDocSII.SETCURRENTKEY(TipoSII,"Bien de inversion",Tipo,Documento,Fecha);
+      TabDocSII.SETFILTER(Fecha, locCuenta.GETFILTER("Date Filter"));
+      //PAGE.RUN(PAGE::"Documentos Recibidos SII",TabDocSII);
+
+      PageRecibidos.DefEmpresa(NEmpresa);
+      PageRecibidos.SETTABLEVIEW(TabDocSII);
+      PageRecibidos.RUNMODAL;
+      CLEAR(PageRecibidos);
+    END;
+
+    PROCEDURE MostrarEnviosEmitidos@1000000004(NEmpresa@1000000001 : Text[30];Cuales@1000000000 : Integer);
+    BEGIN
+      DefLoc;
+      GlbSII.SetGblEmpresa(NEmpresa);
+      TabDocSII.RESET;
+      TabDocSII.SETCURRENTKEY(TipoSII,"Tipo envio","Estado env¡o", Fecha);
+      TabDocSII.SETRANGE(TipoSII, TabDocSII.TipoSII::E);
+      TabDocSII.SETRANGE("Tipo envio", TabDocSII."Tipo envio"::Env¡o);
+      TabDocSII.SETFILTER(Fecha, locCuenta.GETFILTER("Date Filter"));
+      IF Cuales > 0 THEN
+        TabDocSII.SETRANGE("Estado env¡o", Cuales);
+      //PAGE.RUN(PAGE::"Documentos Emitidos SII",TabDocSII);
+
+      PageEmitidos.DefEmpresa(NEmpresa);
+      PageEmitidos.SETTABLEVIEW(TabDocSII);
+      PageEmitidos.RUNMODAL;
+      CLEAR(PageEmitidos);
+    END;
+
+    PROCEDURE MostrarEnviosRecibidos@1000000005(NEmpresa@1000000001 : Text[30];Cuales@1000000000 : Integer);
+    BEGIN
+      DefLoc;
+      GlbSII.SetGblEmpresa(NEmpresa);
+      TabDocSII.RESET;
+      TabDocSII.SETCURRENTKEY(TipoSII,"Tipo envio","Estado env¡o", Fecha);
+      TabDocSII.SETRANGE(TipoSII, TabDocSII.TipoSII::R);
+      TabDocSII.SETRANGE("Tipo envio", TabDocSII."Tipo envio"::Env¡o);
+      TabDocSII.SETFILTER(Fecha, locCuenta.GETFILTER("Date Filter"));
+      IF Cuales > 0 THEN
+        TabDocSII.SETRANGE("Estado env¡o", Cuales);
+      //PAGE.RUN(PAGE::"Documentos Recibidos SII",TabDocSII);
+
+      PageRecibidos.DefEmpresa(NEmpresa);
+      PageRecibidos.SETTABLEVIEW(TabDocSII);
+      PageRecibidos.RUNMODAL;
+      CLEAR(PageRecibidos);
+    END;
+
+    PROCEDURE CambiarEmpresa@1000000006(NEmpresa@1000000000 : Text[30]);
+    BEGIN
+      TabDocSII.CHANGECOMPANY(NEmpresa);
+      CfgEmp.CHANGECOMPANY(NEmpresa);
+      CfgSII.CHANGECOMPANY(NEmpresa);
+    END;
+
+    PROCEDURE CalcularCampos@1000000007(NEmpresa@1000000000 : Text[30]);
+    BEGIN
+      TabDocSII.RESET;
+      TabDocSII.SETCURRENTKEY(TipoSII,"Tipo envio","Estado env¡o", Fecha);
+      TabDocSII.SETRANGE(TipoSII, TabDocSII.TipoSII::E);
+      TabDocSII.SETFILTER(Fecha, locCuenta.GETFILTER("Date Filter"));
+      numDocEmitidos := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Tipo envio", TabDocSII."Tipo envio"::Env¡o);
+      FVEnviadas[1] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Correcto);
+      FVEnviadas[2] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::AceptadoConErrores);
+      FVEnviadas[3] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Incorrecto);
+      FVEnviadas[4] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Error);
+      FVEnviadas[5] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o");
+      TabDocSII.SETRANGE("Tipo envio");
+      TabDocSII.SETRANGE(TipoSII, TabDocSII.TipoSII::R);
+      numDocRecibidos := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Tipo envio", TabDocSII."Tipo envio"::Env¡o);
+      TabDocSII.SETRANGE("Estado env¡o");
+      FCEnviadas[1] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Correcto);
+      FCEnviadas[2] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::AceptadoConErrores);
+      FCEnviadas[3] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Incorrecto);
+      FCEnviadas[4] := TabDocSII.COUNT;
+
+      TabDocSII.SETRANGE("Estado env¡o", TabDocSII."Estado env¡o"::Error);
+      FCEnviadas[5] := TabDocSII.COUNT;
+
+
+      IF CfgEmp.GET THEN
+        NIF := CfgEmp."VAT Registration No."
+      ELSE
+        NIF := '';
+
+      IF CfgSII.GET THEN
+        CertificadoHasta := CfgSII."Valido hasta"
+      ELSE
+        CertificadoHasta := 0D;
+    END;
+
+    LOCAL PROCEDURE FindPeriod@2(SearchText@1000 : Code[10]);
+    VAR
+      Calendar@1001 : Record 2000000007;
+      PeriodFormMgt@1002 : Codeunit 359;
+    BEGIN
+      WITH locCuenta DO BEGIN
+        IF GETFILTER("Date Filter") <> '' THEN BEGIN
+          Calendar.SETFILTER("Period Start",GETFILTER("Date Filter"));
+          IF NOT PeriodFormMgt.FindDate('+',Calendar,PeriodType) THEN
+            PeriodFormMgt.FindDate('+',Calendar,PeriodType::Day);
+          Calendar.SETRANGE("Period Start");
+        END;
+        PeriodFormMgt.FindDate(SearchText,Calendar,PeriodType);
+        SETRANGE("Date Filter",Calendar."Period Start",Calendar."Period End");
+        IF GETRANGEMIN("Date Filter") = GETRANGEMAX("Date Filter") THEN
+          SETRANGE("Date Filter",GETRANGEMIN("Date Filter"));
+
+        DateFilter := GETFILTER("Date Filter");
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,202 @@
+OBJECT Codeunit 88204 Obtencion datos SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=25/07/17;
+    Time=17:12:38;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      NMovDoc@1000000000 : Integer;
+      qEmpresa@1100288000 : Text[30];
+      GblSII@1100288001 : Codeunit 88200;
+
+    PROCEDURE FV2FE@1000000000(Documento@1000000000 : Record 112;VAR MemInt@1000000001 : Record 88202);
+    BEGIN
+    END;
+
+    PROCEDURE CargarDocSII@1000000001(memIntSII@1000000000 : Record 88202;sobreEscribir@1000000001 : Boolean) : Integer;
+    VAR
+      DocuSII@1000000002 : Record 88208;
+      NumMov@1000000003 : Integer;
+      LinDocuSII@1000000004 : Record 88209;
+      FunSII@1000000005 : Codeunit 88201;
+      i@1000000006 : Integer;
+    BEGIN
+      IF memIntSII.Tipo = memIntSII.Tipo::Impuestos THEN BEGIN
+        DocuSII.RESET;
+        NMovDoc := 0;
+
+        qEmpresa := GblSII.GetGblEmpresa;
+        IF qEmpresa <> '' THEN BEGIN
+          DocuSII.CHANGECOMPANY(qEmpresa);
+          LinDocuSII.CHANGECOMPANY(qEmpresa);
+        END;
+
+        IF DocuSII.FIND('+') THEN
+          NumMov := DocuSII.NMov
+        ELSE
+          NumMov := 0;
+
+        DocuSII.SETCURRENTKEY(TipoSII, "Bien de inversion", Tipo, Documento);
+        DocuSII.SETRANGE(TipoSII, memIntSII.TipoSII);
+        DocuSII.SETRANGE(Tipo, memIntSII.TipoDocumento);
+        DocuSII.SETRANGE(Documento, memIntSII.Documento);
+        DocuSII.SETRANGE("NMov IVA", memIntSII."NMov IVA");
+        IF DocuSII.FIND('-') THEN BEGIN
+          IF NOT sobreEscribir THEN
+            EXIT
+          ELSE BEGIN // Comprobar si no se ha enviado ya la informaci¢n
+            IF FunSII.DocuSIIYaProcesado(DocuSII) THEN
+              EXIT
+            ELSE BEGIN // Borramos las l¡neas
+              LinDocuSII.SETRANGE(NMovDoc, DocuSII.NMov);
+              LinDocuSII.DELETEALL;
+            END;
+          END;
+        END ELSE BEGIN
+         DocuSII.INIT;
+         DocuSII.NMov := NumMov + 1;
+         DocuSII.INSERT;
+        END;
+
+        DocuSII.TipoSII                      := memIntSII.TipoSII;
+        DocuSII.Tipo                         := memIntSII.TipoDocumento;
+        DocuSII.Documento                    := memIntSII.Documento;
+        DocuSII.Fecha                        := memIntSII.Fecha;
+        DocuSII.NIF                          := memIntSII.NIF;
+        DocuSII.RazonSocial                  := memIntSII.RazonSocial;
+        DocuSII.DocumentoTercero             := memIntSII.DocumentoTercero;
+        DocuSII."Fecha documento"            := memIntSII."Fecha documento";
+        DocuSII.NumTercero                   := memIntSII.NumTercero;
+        DocuSII.TextoRegistro                := memIntSII.TextoRegistro;
+        DocuSII."Cod. divisa"                := memIntSII."Cod. divisa";
+        DocuSII."Factor divisa"              := memIntSII."Factor divisa";
+        DocuSII."Cod. pais"                  := memIntSII."Cod. pais";
+        DocuSII."Tipo factura rectificativa" := memIntSII."Tipo factura rectificativa";
+        DocuSII."Factura corregida"          := memIntSII."Factura corregida";
+        DocuSII."Fecha factura corregida"    := memIntSII."Fecha factura corregida";
+        DocuSII."Base rectificada"           := memIntSII."Base rectificada";
+        DocuSII."Cuota rectificada"          := memIntSII."Cuota rectificada";
+        DocuSII."Recargo rectificada"        := memIntSII."Recargo rectificada";
+        DocuSII.DUA                          := memIntSII."Numero DUA";
+        DocuSII."Fecha DUA"                  := memIntSII."Fecha DUA";
+        DocuSII."Situacion inmueble"         := memIntSII."Situacion inmueble";
+        DocuSII."Referencia catastral"       := memIntSII."Referencia catastral";
+        DocuSII."Tipo factura"               := memIntSII."Tipo factura";
+        DocuSII."Clave operacion"            := memIntSII."Clave operacion";
+        DocuSII."Emitida por terceros"       := memIntSII."Emitida por terceros";
+        DocuSII."Medio de pago/cobro"        := memIntSII."Medio de pago/cobro";
+        DocuSII."Tipo operacion intracomu."  := memIntSII."Tipo operacion intracomu.";
+        DocuSII."Clave declarado intracomu." := memIntSII."Clave declarado intracomu.";
+        DocuSII.DireccionOperador            := memIntSII.DireccionOperador;
+        DocuSII."NMov IVA"                   := memIntSII."NMov IVA";
+        DocuSII."Descripcion Error"          := memIntSII."Texto error";
+        DocuSII."Codigo Error"               := memIntSII."Codigo Error";
+        DocuSII.IDOtro                       := memIntSII.IDOtro;
+        DocuSII."No enviar"                  := memIntSII."No enviar";
+        DocuSII."Fecha operacion"            := memIntSII."Fecha operacion";
+        DocuSII."Factura resumen inicio"     := memIntSII."Factura resumen inicio";
+        DocuSII."Factura resumen fin"        := memIntSII."Factura resumen fin";
+        DocuSII."Creation date"              := memIntSII."Creation date";
+        DocuSII.DocumentoPago                := memIntSII.DocumentoPago;
+        DocuSII.MODIFY;
+
+        // Metemos la l¡nea correspondiente
+        IF memIntSII."Tipo IVA" <> memIntSII."Tipo IVA"::"No sujeto" THEN
+          InsLineas(memIntSII, DocuSII.NMov);
+
+        NMovDoc := DocuSII.NMov;
+        EXIT(DocuSII.NMov);
+      END;
+
+      IF memIntSII.Tipo = memIntSII.Tipo::Lineas THEN BEGIN
+        IF NMovDoc <> 0 THEN
+          InsLineas(memIntSII, NMovDoc);
+      END;
+    END;
+
+    PROCEDURE InsLineas@1000000008(memIntSII@1000000001 : Record 88202;NumMovDoc@1000000002 : Integer);
+    VAR
+      LinDocuSII@1000000000 : Record 88209;
+      NumMov@1000000003 : Integer;
+    BEGIN
+      // Metemos la l¡nea correspondiente
+      qEmpresa := GblSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN
+        LinDocuSII.CHANGECOMPANY(qEmpresa);
+
+      LinDocuSII.SETRANGE(NMovDoc, NumMovDoc);
+      IF LinDocuSII.FIND('+') THEN
+        NumMov := LinDocuSII.NMov
+      ELSE
+        NumMov := 0;
+      LinDocuSII.NMovDoc                    := NumMovDoc;
+      LinDocuSII.NMov                       := NumMov+1;
+      LinDocuSII.Base                       := memIntSII.BaseIVA;
+      LinDocuSII.Cuota                      := memIntSII.ImporteIVA;
+      LinDocuSII."%IVA"                     := memIntSII."%IVA";
+      LinDocuSII."%RE"                      := memIntSII."%RE";
+      LinDocuSII.ImporteIVA                 := memIntSII.ImporteIVA;
+      LinDocuSII.ImporteRE                  := memIntSII.ImporteRE;
+      LinDocuSII."Tipo IVA"                 := memIntSII."Tipo IVA";
+      LinDocuSII."Grupo registro IVA neg."  := memIntSII."Grupo registro IVA neg.";
+      LinDocuSII."Grupo registro IVA prod." := memIntSII."Grupo registro IVA prod.";
+      LinDocuSII."NMov IVA"                 := memIntSII."NMov IVA";
+      LinDocuSII.Sujeta_NoExenta            := memIntSII.Sujeta_NoExenta;
+      LinDocuSII."Causa exencion"           := memIntSII."Causa exencion";
+      LinDocuSII."Importe no realizado"     := memIntSII."Importe no realizado";
+      LinDocuSII."Base no realizada"        := memIntSII."Base no realizada";
+      LinDocuSII."Criterio de IVA de caja"  := memIntSII."Criterio de IVA de caja";
+      LinDocuSII."Inversion sujeto pasivo"  := memIntSII."Inversion sujeto pasivo";
+      LinDocuSII."Cuota deducible"          := memIntSII.ImporteIVA;
+      LinDocuSII.Service                    := memIntSII.Service;
+      LinDocuSII.DUA                        := memIntSII.DUA;
+      LinDocuSII."NMov IVA no realizado"    := memIntSII."NMov IVA no realizado";
+      LinDocuSII.Retencion                  := memIntSII.Retencion;
+      LinDocuSII.Cuota                      := memIntSII.OrigenImporteIVA;
+      LinDocuSII."No enviar"                := memIntSII."No enviar linea";
+      LinDocuSII."Tipo No Sujeto"           := memIntSII."Tipo No Sujeto";
+      LinDocuSII.INSERT;
+    END;
+
+    BEGIN
+    {
+      Codeunit para obtener los datos de las facturas emitidas y recibidas
+      que hay que enviar a la AEAT
+
+      Los datos se devolver n en dos instancias de la tabla "Mem. int. SII" (88202):
+      ( Se ver  si con una es suficiente )
+
+          - Una con los datos generales de cabecera (1 £nico registro):
+              . Razon social
+              . NIF
+              . Fecha
+              . N§ documento
+              . Tipo desglose
+              . Tipo factura
+              . Clave regimen especial o trascendencia
+              .
+
+          - Otra con los datos relativos a las l¡neas (1 ¢ mas registros):
+              . Bases, Cuotas e IVAS
+              . Sujetos o Exentos
+              . Productos o Servicios
+
+
+
+
+    }
+    END.
+  }
+}
+

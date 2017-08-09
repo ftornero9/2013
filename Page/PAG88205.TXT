@@ -1,0 +1,103 @@
+OBJECT Page 88205 Lin. documentos SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/07/17;
+    Time=19:17:27;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII documents lin.;
+               ESP=Lin. documentos SII];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=Yes;
+    SourceTable=Table88209;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Base;
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=Cuota;
+                Editable=FALSE }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Cuota deducible" }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Importe no realizado";
+                Editable=FALSE }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Base no realizada";
+                Editable=FALSE }
+
+    { 1000000016;2;Field  ;
+                SourceExpr=Service }
+
+    { 1000000006;2;Field  ;
+                SourceExpr=Retencion }
+
+    { 1000000018;2;Field  ;
+                SourceExpr=DUA }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="%IVA";
+                Editable=FALSE }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="%RE";
+                Editable=FALSE }
+
+    { 1000000007;2;Field  ;
+                SourceExpr=ImporteRE;
+                Editable=FALSE }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Grupo registro IVA neg.";
+                Editable=FALSE }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Grupo registro IVA prod.";
+                Editable=FALSE }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Tipo IVA" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Tipo No Sujeto" }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=Sujeta_NoExenta }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Causa exencion" }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="Inversion sujeto pasivo" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="No enviar" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

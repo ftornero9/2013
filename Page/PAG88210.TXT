@@ -1,0 +1,125 @@
+OBJECT Page 88210 Config. cod. operaci¢n SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/07/17;
+    Time=19:52:33;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII operation code config.;
+               ESP=Config. cod. operaci¢n SII];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table88207;
+    PageType=List;
+    OnOpenPage=BEGIN
+                 IniTabla;
+                 SETRANGE(Ocultar, FALSE);
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1000000016;  ;ActionContainer;
+                      Name=Acciones;
+                      ActionContainerType=NewDocumentItems }
+      { 1000000017;1 ;Action    ;
+                      Name=Mostrar ocultos;
+                      OnAction=BEGIN
+                                 SETRANGE(Ocultar, TRUE);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Grupo registro IVA neg.";
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Grupo registro IVA prod.";
+                Editable=FALSE }
+
+    { 1000000018;2;Field  ;
+                SourceExpr=Service }
+
+    { 1000000015;2;Field  ;
+                SourceExpr=Ocultar }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="No enviar" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Tipo c lculo IVA";
+                Editable=FALSE }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Tipo No Sujeto" }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="C¢d. operacion recibidas" }
+
+    { 1000000011;2;Field  ;
+                Name=Descripci¢n recibidas;
+                CaptionML=[ENU=Received description;
+                           ESP=Descripci¢n recibidas];
+                SourceExpr=DevDescCodOperaRecibida;
+                Editable=FALSE }
+
+    { 1000000021;2;Field  ;
+                SourceExpr=Retencion }
+
+    { 1000000019;2;Field  ;
+                SourceExpr=DUA }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="Inversion sujeto pasivo" }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="C¢d. operacion emitidas" }
+
+    { 1000000012;2;Field  ;
+                Name=Descripci¢n emtidas;
+                CaptionML=[ENU=Submitted description;
+                           ESP=Descripci¢n emitidas];
+                SourceExpr=DevDescCodOperaEmitida;
+                Enabled=FALSE }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Causa Exencion" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="% IVA+RE";
+                Editable=FALSE }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Tipo IVA no realizado";
+                Editable=FALSE }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="% RE";
+                Editable=FALSE }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="% IVA";
+                Editable=FALSE }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

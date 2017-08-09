@@ -1,0 +1,61 @@
+OBJECT Page 88203 Lista certificados SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=22/06/17;
+    Time=15:37:33;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII certificates list;
+               ESP=Lista certificados SII];
+    SourceTable=Table88203;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr=Certificado }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="N§ serie" }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=CIF }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Nombre }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Valido desde" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Valido hasta" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Huella Digital" }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Clave privada" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr=Emisor }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

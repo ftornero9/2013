@@ -1,0 +1,161 @@
+OBJECT Report 88204 Enviar documentos SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=21/07/17;
+    Time=18:16:07;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+  }
+  DATASET
+  {
+    { 1000000000;;DataItem;Emitidos          ;
+               DataItemTable=Table88208;
+               DataItemTableView=SORTING(TipoSII,Bien de inversion,NMov IVA,Estado env¡o)
+                                 WHERE(TipoSII=CONST(E),
+                                       Bien de inversion=CONST(No),
+                                       Estado env¡o=FILTER(<>Correcto));
+               OnPreDataItem=BEGIN
+                               i := 0;
+                               IF GUIALLOWED THEN
+                                 Vent.OPEN('Emitidos: #1#########');
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  i := i + 1;
+                                  IF GUIALLOWED THEN
+                                    Vent.UPDATE(1, i);
+
+                                  IF Tipo = Tipo::Factura THEN
+                                    FunSII.EnviarDocEmitido(Emitidos);
+
+                                  IF Tipo = Tipo::Pago THEN
+                                    FunSII.EnviarCobroEmitidas(Emitidos);
+                                END;
+
+               OnPostDataItem=BEGIN
+                                IF GUIALLOWED THEN
+                                  Vent.CLOSE;
+                              END;
+                               }
+
+    { 1000000001;;DataItem;Recibidos         ;
+               DataItemTable=Table88208;
+               DataItemTableView=SORTING(TipoSII,Bien de inversion,NMov IVA,Estado env¡o)
+                                 WHERE(TipoSII=CONST(R),
+                                       Bien de inversion=CONST(No),
+                                       Estado env¡o=FILTER(<>Correcto));
+               OnPreDataItem=BEGIN
+                               i := 0;
+                               IF GUIALLOWED THEN
+                                 Vent.OPEN('Recibidos: #1#########');
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  i := i + 1;
+                                  IF GUIALLOWED THEN
+                                    Vent.UPDATE(1, i);
+
+                                  IF Tipo = Tipo::Factura THEN
+                                    FunSII.EnviarDocRecibido(Recibidos);
+
+                                  IF Tipo = Tipo::Pago THEN
+                                    FunSII.EnviarPagoRecibidas(Recibidos);
+                                END;
+
+               OnPostDataItem=BEGIN
+                                IF GUIALLOWED THEN
+                                  Vent.CLOSE;
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      FunSII@1000000000 : Codeunit 88201;
+      Vent@1000000002 : Dialog;
+      i@1000000001 : Integer;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition">
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <Body>
+    <Height>2in</Height>
+    <Style />
+  </Body>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Width>6.5in</Width>
+  <Page>
+    <Style />
+  </Page>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

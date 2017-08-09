@@ -1,0 +1,482 @@
+OBJECT Page 88201 Documentos Emitidos SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=22/07/17;
+    Time=11:58:13;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII issued documents;
+               ESP=Documentos Emitidos SII];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=Yes;
+    SourceTable=Table88208;
+    SourceTableView=SORTING(TipoSII,Bien de inversion,Tipo,Documento,Fecha)
+                    WHERE(TipoSII=CONST(E),
+                          Tipo=FILTER(Factura|Pago));
+    PageType=List;
+    OnOpenPage=BEGIN
+                 GlbSII.SetGblEmpresa(qEmpresa);
+                 IF qEmpresa <> '' THEN
+                   CHANGECOMPANY(qEmpresa);
+
+                 IF FunSII.EjecutarProcesoAutMovsIVA THEN BEGIN
+                   ProcesarMovsIVA.USEREQUESTPAGE(FALSE);
+                   ProcesarMovsIVA.RUN;
+                 END;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1000000011;  ;ActionContainer;
+                      Name=SII;
+                      ActionContainerType=ActionItems }
+      { 1000000016;1 ;Action    ;
+                      Name=Enviar;
+                      CaptionML=[ENU=Send;
+                                 ESP=Enviar];
+                      Image=SendTo;
+                      OnAction=BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 CfgSII."Agrupar env¡os" := FALSE;
+
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   DT := CURRENTDATETIME;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   // FACTURAS
+                                   qRec.SETRANGE(Tipo, Tipo::Factura);
+                                   IF qRec.FIND('-') THEN BEGIN
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     IF CfgSII."Agrupar env¡os" THEN
+                                       FunSII.EnviarEmitidosAgrupados(tmpDocSII)
+                                     ELSE BEGIN
+                                       FileName := FunSII.GenXMLEmitidosAgrupados(tmpDocSII, 2);
+                                       IF FileName <> '' THEN
+                                         MESSAGE(Text002, FileName);
+                                     END;
+                                   END;
+
+                                   // COBROS
+                                   tmpDocSII.DELETEALL;
+                                   qRec.SETRANGE(Tipo, Tipo::Pago);
+                                   IF qRec.FIND('-') THEN  BEGIN
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     IF CfgSII."Agrupar env¡os" THEN
+                                       FunSII.EnviarCobroEmitidasAgrupados(tmpDocSII)
+                                     ELSE BEGIN
+                                       FileName := FunSII.GenXMLCobroEmitidasAgrupados(tmpDocSII, 2);
+                                       IF FileName <> '' THEN
+                                         MESSAGE(Text002, FileName);
+                                     END;
+                                   END;
+
+                                 END  ELSE BEGIN
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     IF qRec.Tipo = qRec.Tipo::Factura THEN
+                                       FunSII.EnviarDocEmitido(qRec);
+                                     IF qRec.Tipo = qRec.Tipo::Pago THEN
+                                       FunSII.EnviarCobroEmitidas(qRec);
+                                   UNTIL qRec.NEXT = 0;
+                                 END;
+                               END;
+                                }
+      { 1000000035;1 ;Separator  }
+      { 1000000041;1 ;ActionGroup;
+                      Name=Contrastar;
+                      CaptionML=[ENU=Checkout;
+                                 ESP=Contrastar] }
+      { 1000000042;2 ;Action    ;
+                      Name=Periodo;
+                      CaptionML=[ENU=Period;
+                                 ESP=Periodo];
+                      Image=AdjustEntries;
+                      OnAction=BEGIN
+                                 qRec := Rec;
+                                 qRec.NIF := '';
+                                 qRec.RazonSocial := '';
+                                 FunSII.ContrastarDocEmitidos(qRec);
+                               END;
+                                }
+      { 1000000043;2 ;Action    ;
+                      Name=Periodo y NIF;
+                      CaptionML=[ENU=Period & VAT No;
+                                 ESP=Periodo y NIF];
+                      Image=ApplyEntries;
+                      OnAction=BEGIN
+                                 FunSII.ContrastarDocEmitidos(Rec);
+                               END;
+                                }
+      { 1000000040;1 ;Separator  }
+      { 1000000012;1 ;ActionGroup;
+                      Name=Consulta;
+                      CaptionML=[ENU=Consult;
+                                 ESP=Consulta];
+                      Image=GetSourceDoc }
+      { 1000000044;2 ;Action    ;
+                      Name=Periodo1;
+                      CaptionML=[ENU=Period;
+                                 ESP=Periodo];
+                      Image=GetSourceDoc;
+                      OnAction=BEGIN
+                                 qRec := Rec;
+                                 qRec.NIF := '';
+                                 qRec.RazonSocial := '';
+
+                                 IF Tipo = Tipo::Factura THEN
+                                   FunSII.ConDocEmitidosEnviados(qRec);
+
+                                 IF Tipo = Tipo::Pago THEN
+                                   FunSII.ConCobroEmitidas(Rec);
+                               END;
+                                }
+      { 1000000045;2 ;Action    ;
+                      Name=Periodo y NIF1;
+                      CaptionML=[ENU=Period & VAT No;
+                                 ESP=Periodo y NIF];
+                      Image=GetSourceDoc;
+                      OnAction=BEGIN
+                                 IF Tipo = Tipo::Factura THEN
+                                   FunSII.ConDocEmitidosEnviados(Rec);
+
+                                 IF Tipo = Tipo::Pago THEN
+                                   FunSII.ConCobroEmitidas(Rec);
+                               END;
+                                }
+      { 1000000034;1 ;Action    ;
+                      Name=Refrescar;
+                      CaptionML=[ENU=Refresh;
+                                 ESP=Refrescar];
+                      Image=UpdateXML;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+
+                                 CurrPage.SETSELECTIONFILTER(qRec);
+                                 IF qRec.FIND('-') THEN  REPEAT
+                                   FunSII.RefrescarDocSII(qRec);
+                                 UNTIL qRec.NEXT = 0;
+                               END;
+                                }
+      { 1000000019;1 ;Separator  }
+      { 1000000031;1 ;Action    ;
+                      Name=Comprobar NIF;
+                      CaptionML=[ENU=Check VAT No;
+                                 ESP=Comprobar NIF];
+                      Image=User;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+
+                                 CurrPage.SETSELECTIONFILTER(qRec);
+                                 IF qRec.FIND('-') THEN  REPEAT
+                                   WebSII.CalidadDatos(qRec.NIF, qRec.RazonSocial, FALSE);
+                                 UNTIL qRec.NEXT = 0;
+                               END;
+                                }
+      { 1000000030;1 ;Separator  }
+      { 1000000020;1 ;Action    ;
+                      Name=Anular;
+                      CaptionML=[ENU=Void send;
+                                 ESP=Anular];
+                      Image=ReverseRegister;
+                      OnAction=VAR
+                                 qRec@1000000000 : Record 88208;
+                               BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 IF CONFIRM(Text001, FALSE) THEN BEGIN
+                                   DT := CURRENTDATETIME;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   IF qRec.FIND('-') THEN  REPEAT
+                                     FunSII.AnularDocEmitido(qRec, DT);
+                                   UNTIL qRec.NEXT = 0;
+                                 END;
+                               END;
+                                }
+      { 1000000013;1 ;ActionGroup;
+                      Name=XML }
+      { 1000000014;2 ;Action    ;
+                      Name=Ver;
+                      CaptionML=[ENU=View;
+                                 ESP=Ver];
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+
+                                   qRec.SETRANGE(Tipo, Tipo::Factura);
+                                   IF qRec.FIND('-') THEN BEGIN
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     FunSII.GenXMLEmitidosAgrupados(tmpDocSII, 0);
+                                   END;
+
+                                   qRec.SETRANGE(Tipo, Tipo::Pago);
+                                   IF qRec.FIND('-') THEN BEGIN
+                                     tmpDocSII.DELETEALL;
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     FunSII.GenXMLCobroEmitidasAgrupados(tmpDocSII, 0);
+                                   END;
+
+                                 END  ELSE BEGIN
+                                   IF Tipo = Tipo::Factura THEN
+                                     FunSII.GenerarXMLDocEmitido(Rec, FALSE);
+                                   IF Tipo = Tipo::Pago THEN
+                                     FunSII.GenerarXMLCobroEmitidas(Rec, FALSE);
+                                 END;
+                               END;
+                                }
+      { 1000000015;2 ;Action    ;
+                      Name=Exportar;
+                      CaptionML=[ENU=Export;
+                                 ESP=Exportar];
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 //qEmpresa := GlbSII.GetGblEmpresa;
+                                 IF qEmpresa <> '' THEN BEGIN
+                                   CfgSII.CHANGECOMPANY(qEmpresa);
+                                   qRec.CHANGECOMPANY(qEmpresa);
+                                 END;
+
+                                 CfgSII.GET;
+                                 IF CfgSII."Agrupar env¡os" OR CfgSII."Gesti¢n externa env¡os" THEN BEGIN
+                                   tmpDocSII.DELETEALL;
+                                   CurrPage.SETSELECTIONFILTER(qRec);
+                                   qRec.SETRANGE(Tipo, Tipo::Factura);
+                                   IF qRec.FIND('-') THEN BEGIN
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     FunSII.GenXMLEmitidosAgrupados(tmpDocSII, 1);
+                                   END;
+
+                                   qRec.SETRANGE(Tipo, Tipo::Pago);
+                                   IF qRec.FIND('-') THEN BEGIN
+                                     tmpDocSII.DELETEALL;
+                                     REPEAT
+                                       tmpDocSII.NMov := qRec.NMov;
+                                       tmpDocSII.INSERT;
+                                     UNTIL qRec.NEXT = 0;
+                                     FunSII.GenXMLCobroEmitidasAgrupados(tmpDocSII, 1);
+                                   END;
+
+                                 END  ELSE BEGIN
+                                   IF Tipo = Tipo::Factura THEN
+                                     FunSII.GenerarXMLDocEmitido(Rec, TRUE);
+                                   IF Tipo = Tipo::Pago THEN
+                                     FunSII.GenerarXMLCobroEmitidas(Rec, TRUE);
+                                 END;
+                               END;
+                                }
+      { 1000000029;1 ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ESP=&Navegar];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate.SetDoc(Fecha,Documento);
+                                 Navigate.RUN;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000032;2;Field  ;
+                SourceExpr=Tipo;
+                Editable=FALSE }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Documento;
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=Fecha;
+                Editable=FALSE }
+
+    { 1000000057;2;Field  ;
+                SourceExpr="Fecha documento" }
+
+    { 1000000046;2;Field  ;
+                SourceExpr="Fecha operacion" }
+
+    { 1000000033;2;Field  ;
+                SourceExpr="No enviar" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=NIF }
+
+    { 1000000005;2;Field  ;
+                SourceExpr=RazonSocial }
+
+    { 1000000006;2;Field  ;
+                SourceExpr=NumTercero }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Estado env¡o" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Tipo envio" }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=Env¡os }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=TextoRegistro }
+
+    { 1000000056;2;Field  ;
+                SourceExpr=IDOtro }
+
+    { 1000000058;2;Field  ;
+                SourceExpr=IDTipo }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Cod. pais" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Tipo factura" }
+
+    { 1000000047;2;Field  ;
+                SourceExpr="Factura resumen inicio" }
+
+    { 1000000048;2;Field  ;
+                SourceExpr="Factura resumen fin" }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Clave operacion" }
+
+    { 1000000059;2;Field  ;
+                SourceExpr="Lineas documento" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr=Base }
+
+    { 1000000023;2;Field  ;
+                SourceExpr=Cuota }
+
+    { 1000000038;2;Field  ;
+                SourceExpr="Base no realizada" }
+
+    { 1000000039;2;Field  ;
+                SourceExpr="Cuota no realizada" }
+
+    { 1000000052;2;Field  ;
+                SourceExpr="Tipo factura rectificativa" }
+
+    { 1000000053;2;Field  ;
+                SourceExpr="Factura corregida" }
+
+    { 1000000054;2;Field  ;
+                SourceExpr="Fecha factura corregida" }
+
+    { 1000000051;2;Field  ;
+                SourceExpr="Emitida por terceros" }
+
+    { 1000000055;2;Field  ;
+                SourceExpr="Medio de pago/cobro" }
+
+    { 1000000049;2;Field  ;
+                SourceExpr="Situacion inmueble" }
+
+    { 1000000050;2;Field  ;
+                SourceExpr="Referencia catastral" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Timestamp presentaci¢n" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Tipo comunicaci¢n" }
+
+    { 1000000026;2;Field  ;
+                SourceExpr=CSV }
+
+    { 1000000036;2;Field  ;
+                SourceExpr="Estado cuadre";
+                Editable=FALSE }
+
+    { 1000000037;2;Field  ;
+                SourceExpr="Timestamp cuadre" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Codigo Error" }
+
+    { 1000000028;2;Field  ;
+                SourceExpr="Descripcion Error" }
+
+  }
+  CODE
+  {
+    VAR
+      FunSII@1000000000 : Codeunit 88201;
+      qEmpresa@1000000003 : Text[30];
+      Text001@1000000004 : TextConst 'ENU=Ejecutar proceso de anulaci¢n';
+      ProcesarMovsIVA@1000000001 : Report 88201;
+      Navigate@1000000002 : Page 344;
+      GlbSII@1000000005 : Codeunit 88200;
+      WebSII@1000000006 : Codeunit 88202;
+      CfgSII@1000000011 : Record 88201;
+      qRec@1000000010 : Record 88208;
+      tmpDocSII@1000000009 : TEMPORARY Record 88208;
+      DT@1000000008 : DateTime;
+      FileName@1000000007 : Text[1024];
+      Text002@1000000012 : TextConst 'ENU=File %1, created.;ESP=Fichero %1, creado.';
+
+    PROCEDURE DefEmpresa@1000000000(PasoEmpresa@1000000000 : Text[30]);
+    BEGIN
+      qEmpresa := PasoEmpresa;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

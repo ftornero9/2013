@@ -1,0 +1,292 @@
+OBJECT Page 88204 Configuraci¢n SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=14/07/17;
+    Time=20:06:00;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII configuration;
+               ESP=Configuraci¢n SII];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table88201;
+    PageType=Card;
+    OnOpenPage=BEGIN
+                 RESET;
+                 IF NOT GET THEN BEGIN
+                   INIT;
+                   INSERT;
+                 END;
+
+                 NoHabilitado := NOT Enabled;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1000000041;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1000000049;1 ;ActionGroup;
+                      CaptionML=[ENU=Simple Invoices;
+                                 ESP=Facturas Simplificadas] }
+      { 1000000026;2 ;Action    ;
+                      Name=Series Emtidas;
+                      CaptionML=[ENU=Sales Series;
+                                 ESP=Series Emtidas];
+                      RunObject=Page 88200;
+                      RunPageView=WHERE(Tipo registro=CONST(Series),
+                                        Tipo=CONST(E));
+                      Image=Invoice }
+      { 1000000027;2 ;Action    ;
+                      Name=Series Recibidas;
+                      CaptionML=[ENU=Purch. Series;
+                                 ESP=Series Recibidas];
+                      RunObject=Page 88200;
+                      RunPageView=WHERE(Tipo registro=CONST(Series),
+                                        Tipo=CONST(R));
+                      Image=ReceivableBill }
+      { 1000000034;2 ;Action    ;
+                      Name=Customer;
+                      CaptionML=[ENU=Customer;
+                                 ESP=Cliente];
+                      RunObject=Page 88200;
+                      RunPageView=SORTING(Tipo registro,Tipo,Code,No. mov.)
+                                  WHERE(Tipo registro=CONST(Clientes));
+                      Image=Customer }
+      { 1000000046;1 ;ActionGroup;
+                      CaptionML=[ENU=Exclude Series;
+                                 ESP=Excluir Series] }
+      { 1000000047;2 ;Action    ;
+                      Name=Emitidas;
+                      CaptionML=[ENU=Sales;
+                                 ESP=Emitidas];
+                      RunObject=Page 88200;
+                      RunPageView=WHERE(Tipo registro=CONST(Excluir),
+                                        Tipo=CONST(E));
+                      Image=Sales }
+      { 1000000048;2 ;Action    ;
+                      Name=Recibidas;
+                      CaptionML=[ENU=Purchases;
+                                 ESP=Recibidas];
+                      RunObject=Page 88200;
+                      RunPageView=WHERE(Tipo registro=CONST(Excluir),
+                                        Tipo=CONST(R));
+                      Image=Purchase }
+      { 1000000036;1 ;ActionGroup;
+                      ActionContainerType=ActionItems }
+      { 1000000038;2 ;Action    ;
+                      Name=Import;
+                      CaptionML=[ENU=Import certificate;
+                                 ESP=Importar certificado];
+                      ToolTipML=[ENU=Choose your digital certificate file, and import it. You will need it to send the SII document.;
+                                 ESP=Seleccione el archivo con su certificado digital e imp¢rtelo. Ser  necesario para enviar el documento SII.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=UserCertificate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 ImportCertificate;
+                                 NoHabilitado := NOT Enabled;
+                               END;
+                                }
+      { 1000000037;2 ;Action    ;
+                      Name=Delete;
+                      CaptionML=[ENU=Delete certificate;
+                                 ESP=Borrar certificado];
+                      ToolTipML=[ENU=Delete your digital certificate file. SII will be disabled.;
+                                 ESP=Elimine su archivo de certificado digital. Se deshabilitar  el SII.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Delete;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 IF CONFIRM(TxtDel, FALSE) THEN BEGIN
+                                   DeleteCertificate;
+                                   NoHabilitado := NOT Enabled;
+                                 END;
+                               END;
+                                }
+      { 1000000013;2 ;Action    ;
+                      Name=Encrypt;
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      PromotedIsBig=Yes;
+                      Image=EncryptionKeys;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 Cadena@1000000000 : Text;
+                                 Cadena2@1000000001 : Text;
+                               BEGIN
+                                 Cadena := Encrypt(Password);
+                                 Cadena2 := Decrypt(Cadena);
+
+                                 MESSAGE('Contrase¤a %1\\Encriptada %2\\Desencriptada %3', Password, Cadena, Cadena2);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=General;
+                GroupType=Group }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="NIF Empresa";
+                Enabled=FALSE }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Raz¢n social";
+                Enabled=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="ID Certificado";
+                Editable=NoHabilitado }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Nombre certificado";
+                Enabled=FALSE }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Huella digital";
+                Enabled=FALSE }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Valido desde";
+                Enabled=FALSE }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Valido hasta";
+                Enabled=FALSE }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Rol SII" }
+
+    { 1000000035;2;Field  ;
+                SourceExpr="Rol modificacion SII" }
+
+    { 1000000028;2;Field  ;
+                SourceExpr="No procesar 1S 2017" }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="No procesar movs. IVA aut." }
+
+    { 1000000032;2;Field  ;
+                SourceExpr="Agrupar env¡os" }
+
+    { 1000000051;1;Group  ;
+                Name=Dates;
+                CaptionML=[ENU=Dates;
+                           ESP=Fechas];
+                GroupType=Group }
+
+    { 1000000042;2;Field  ;
+                SourceExpr="Creation date" }
+
+    { 1000000043;2;Field  ;
+                SourceExpr="Use creation date as posting" }
+
+    { 1000000052;2;Field  ;
+                SourceExpr="Document date" }
+
+    { 1000000050;2;Field  ;
+                SourceExpr="Use document date in Sales" }
+
+    { 1000000029;1;Group  ;
+                Name=External;
+                CaptionML=[ENU=External;
+                           ESP=Externo];
+                GroupType=Group }
+
+    { 1000000030;2;Field  ;
+                SourceExpr="Gesti¢n externa env¡os" }
+
+    { 1000000031;2;Field  ;
+                SourceExpr="Ruta XML envios externos" }
+
+    { 1000000039;1;Group  ;
+                Name=Certificate;
+                CaptionML=[ENU=Certificate;
+                           ESP=Certificado];
+                GroupType=Group }
+
+    { 1000000040;2;Field  ;
+                ExtendedDatatype=Masked;
+                SourceExpr=Password;
+                Editable=NoHabilitado }
+
+    { 1000000033;2;Field  ;
+                SourceExpr=Enabled }
+
+    { 1000000045;1;Group  ;
+                Name=Description;
+                CaptionML=[ENU=Description;
+                           ESP=Descripci¢n];
+                GroupType=Group }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Descripcion Factura venta" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Tipo l¡nea factura Venta" }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Con cantidad en factura venta" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Descripcion Abono venta" }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Tipo l¡nea abono Venta" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Con cantidad en abono venta" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Descripcion Factura compra" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Tipo l¡nea factura compra" }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Con cantidad en factura compra" }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="Descripcion Abono compra" }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Tipo l¡nea abono compra" }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Con cantidad en abono compra" }
+
+    { 1000000044;1;Group  ;
+                Name=XML;
+                CaptionML=[ENU=XML;
+                           ESP=XML];
+                GroupType=Group }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="No guardar XML envio" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="No guardar XML respuesta" }
+
+  }
+  CODE
+  {
+    VAR
+      NoHabilitado@1000000000 : Boolean;
+      TxtDel@1000000001 : TextConst 'ENU=Delete Certificate ?;ESP=Borrar Certificado ?';
+
+    BEGIN
+    END.
+  }
+}
+

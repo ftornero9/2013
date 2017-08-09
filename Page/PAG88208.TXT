@@ -1,0 +1,98 @@
+OBJECT Page 88208 Consultas SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=22/06/17;
+    Time=15:40:24;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=SII queries;
+               ESP=Consultas SII];
+    SourceTable=Table88206;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=NIF }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=Ejercicio }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=Periodo }
+
+    { 1000000005;2;Field  ;
+                SourceExpr=Paginacion }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="NIF Emisor/Presentador" }
+
+    { 1000000007;2;Field  ;
+                SourceExpr=Tipo }
+
+    { 1000000008;2;Field  ;
+                SourceExpr=Documento }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=Fecha }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Tipo factura" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr=Clave }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Importe / Cuota" }
+
+    { 1000000013;2;Field  ;
+                SourceExpr=Descripcion }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Emitida por terceros" }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Nombre Contraparte" }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="NIF Contraparte" }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Factura rectificada" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Fecha factura rectificada" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Timestamp presentaci¢n" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Timestamp ultima modificacion" }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Estado registro" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr=Texto }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,109 @@
+OBJECT Page 88202 Envios SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=24/06/17;
+    Time=22:37:39;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=SII sendings;
+               ESP=Envios SII];
+    SourceTable=Table88204;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1000000013;  ;ActionContainer;
+                      Name=Acciones;
+                      ActionContainerType=NewDocumentItems }
+      { 1000000015;1 ;ActionGroup;
+                      Name=Petici¢n;
+                      Image=History }
+      { 1000000014;2 ;Action    ;
+                      Name=VerXMLReq;
+                      CaptionML=ENU=Ver XML;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 FunSII.VerXMLReqEnvio(Rec);
+                               END;
+                                }
+      { 1000000016;2 ;Action    ;
+                      Name=ExportarXMLReq;
+                      CaptionML=ENU=Exportar XML;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 FunSII.ExportarXMLReqEnvio(Rec);
+                               END;
+                                }
+      { 1000000017;1 ;Separator  }
+      { 1000000018;1 ;ActionGroup;
+                      Name=Respuesta;
+                      Image=History }
+      { 1000000019;2 ;Action    ;
+                      Name=VerXMLRes;
+                      CaptionML=ENU=Ver XML;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 FunSII.VerXMLResEnvio(Rec);
+                               END;
+                                }
+      { 1000000020;2 ;Action    ;
+                      Name=ExportarXMLRes;
+                      CaptionML=ENU=Exportar XML;
+                      Image=XMLFile;
+                      OnAction=BEGIN
+                                 FunSII.ExportarXMLResEnvio(Rec);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Tipo envio" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Estado env¡o" }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Tipo comunicaci¢n" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Timestamp presentaci¢n" }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Usuario }
+
+    { 1000000008;2;Field  ;
+                SourceExpr=CSV }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Codigo Error" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Descripcion Error" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="NMov agrupacion" }
+
+  }
+  CODE
+  {
+    VAR
+      FunSII@1000000001 : Codeunit 88201;
+
+    BEGIN
+    END.
+  }
+}
+

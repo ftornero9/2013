@@ -1,0 +1,89 @@
+OBJECT Page 88200 Series/Clientes SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=19/07/17;
+    Time=19:29:02;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=SII Series/Customers;
+               ESP=Series/Clientes SII];
+    SourceTable=Table88206;
+    SourceTableView=SORTING(Tipo registro,Tipo,Code,No. mov.);
+    PageType=List;
+    AutoSplitKey=Yes;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Code }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Tipo serie";
+                OnValidate=BEGIN
+                             ComprobarSeries;
+                           END;
+                            }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Es prefijo";
+                OnValidate=BEGIN
+                             ComprobarCliente;
+                           END;
+                            }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Tipo factura simplificada";
+                OnValidate=BEGIN
+                             //ComprobarCliente;
+                           END;
+                            }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Tipo factura rectificativa";
+                OnValidate=BEGIN
+                             ComprobarCliente;
+                           END;
+                            }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Tipo rectificativa";
+                OnValidate=BEGIN
+                             ComprobarCliente;
+                           END;
+                            }
+
+  }
+  CODE
+  {
+    VAR
+      Err001@1000000000 : TextConst 'ENU=This informatrion is not allowed in Customers;ESP=No se puede aportar esta informaci¢n para Clientes';
+
+    PROCEDURE ComprobarCliente@1000000000();
+    BEGIN
+      IF ("Tipo registro" = "Tipo registro"::Clientes) OR
+         ("Tipo registro" = "Tipo registro"::Excluir) THEN
+        ERROR(Err001);
+    END;
+
+    PROCEDURE ComprobarSeries@1000000001();
+    BEGIN
+      IF ("Tipo registro" = "Tipo registro"::Clientes) THEN
+        ERROR(Err001);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

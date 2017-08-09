@@ -1,0 +1,1895 @@
+OBJECT Codeunit 88203 Generacion XML SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=21/07/17;
+    Time=17:44:52;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 112=rm,
+                TableData 114=rm,
+                TableData 50004=ri;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Comilla@1000000001 : TextConst 'ESP=""""';
+      gblTotalAmount1@1000000005 : Text;
+      gblTotalAmount2@1000000006 : Text;
+      gblCuota@1000000002 : Decimal;
+      MemFacturaE@1000000004 : TEMPORARY Record 88202;
+      FileMgt@1000000017 : Codeunit 419;
+      TempBlob@1000000018 : Record 99008535;
+      FileName@1000000019 : Text;
+      Sign@1000000022 : TextConst 'ESP=-';
+      NS_sii@1000000023 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/sga/xsd/sii/SuministroInformacion_v0.1';
+      NS_siiLR@1000000024 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/sga/xsd/sii/SuministroLR_v0.1';
+      Ejercicio@1000000026 : Text;
+      Periodo@1000000027 : Text;
+      InfEmp@1000000010 : Record 79;
+      CfgSII@1000000025 : Record 88201;
+      GblSII@1000000043 : Codeunit 88200;
+      "<<DotNET"@1000000003 : Integer;
+      Node@1000000014 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLDoc@1000000028 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      CurrNode@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      NewChild@1000000029 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      NewChild2@1000000008 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLDOMNamedNodeMap@1000000030 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNamedNodeMap";
+      XMLDOMNodeList@1000000031 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      NamespaceManager@1000000033 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNamespaceManager";
+      FunSII@1000000000 : Codeunit 88201;
+      xmlns_sii@1000000037 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroInformacion.xsd;ESP=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroInformacion.xsd';
+      xmlns_siiLR@1000000036 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroLR.xsd;ESP=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroLR.xsd';
+      Envelop@1000000034 : TextConst 'ENU=http://schemas.xmlsoap.org/soap/envelope/;ESP=http://schemas.xmlsoap.org/soap/envelope/';
+      Version@1000000032 : TextConst 'ESP=1.0';
+      VersionPROD@1000000057 : TextConst 'ESP=1.0';
+      xmlns_sum@1000000021 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroInformacion.xsd;ESP=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/SuministroInformacion.xsd';
+      xmlns_con@1000000020 : TextConst 'ENU=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/ConsultaLR.xsd;ESP=https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/ssii/fact/ws/ConsultaLR.xsd';
+      CO_Txt01@1000000016 : TextConst 'ESP=C¢digo Operaci¢n';
+      XMLDOMMgt@1000000035 : Codeunit 6224;
+      CodOperacion@1000000040 : ' ,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15';
+      COAsignada@1000000039 : Boolean;
+      TxtAsignacion@1000000038 : Text[250];
+      FunWS@1000000041 : Codeunit 88202;
+      CO_EXPORT@1000000011 : TextConst 'ESP=02';
+      CO_IGIC_IPSI@1000000042 : TextConst 'ENU=08;ESP=08';
+      CO_UE@1000000047 : TextConst 'ESP=09';
+      FACT_SIMPLIFICADA@1000000044 : TextConst 'ESP=F2';
+      RECT_SIMPLIFICADA@1000000048 : TextConst 'ESP=R5';
+      FACT_RESUMEN@1000000053 : TextConst 'ESP=F4';
+      RE_AGR@1000000045 : TextConst 'ESP=02';
+      ERROR_NIF@1000000046 : TextConst 'ESP=1117';
+      Total_EntregaBienes@1000000049 : Decimal;
+      Total_PrestacionServicios@1000000050 : Decimal;
+      BIENES_UE@1000000051 : TextConst 'ESP=E5';
+      BIENES_NOUE@1000000052 : TextConst 'ESP=E2';
+      CO_1S_E@1000000056 : TextConst 'ESP=16';
+      CO_1S_R@1000000055 : TextConst 'ESP=14';
+      DESC_1S@1000000054 : TextConst 'ESP=Registro del primer semestre';
+      Es1S2017@1000000058 : Boolean;
+      NIF_DESGLOSE_OPERACION@1000000007 : TextConst 'ESP=N';
+
+    LOCAL PROCEDURE GenCabecera@1000000020(VAR Node@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";Tipo@1000000000 : Code[2];Accion@1000000002 : Text[80]);
+    VAR
+      qVersion@1000000001 : Code[10];
+    BEGIN
+      XMLDoc := XMLDoc.XmlDocument;
+
+      GetCfg;
+
+      IF FunSII.DevEnPruebas THEN
+        qVersion := Version
+      ELSE
+        qVersion := VersionPROD;
+
+      WITH XMLDOMMgt DO BEGIN
+        AddRootElementWithPrefix(XMLDoc, 'Envelope', 'soapenv', Envelop, NewChild);
+        AddAttribute(NewChild, 'xmlns:soapenv', Envelop);
+        AddAttribute(NewChild, 'xmlns:siiLR', xmlns_siiLR);
+        AddAttribute(NewChild, 'xmlns:sii', xmlns_sii);
+
+        CurrNode := NewChild;
+        // Header
+        AddElementWithPrefix(CurrNode, 'Header', '', 'soapenv', Envelop, NewChild);
+
+        // Body
+        AddElementWithPrefix(CurrNode, 'Body', '', 'soapenv', Envelop, NewChild);
+          CurrNode := NewChild;
+          AddElementWithPrefix(CurrNode, Accion, '', 'siiLR', xmlns_siiLR, NewChild);
+          CurrNode := NewChild;
+
+          // Cabecera
+          AddElementWithPrefix(CurrNode,'Cabecera','', 'sii', xmlns_sii, NewChild);
+            CurrNode := NewChild;
+            AddElementWithPrefix(CurrNode, 'IDVersionSii', qVersion, 'sii', xmlns_sii, NewChild);
+            AddElementWithPrefix(CurrNode, 'Titular', '', 'sii', xmlns_sii, NewChild);
+                CurrNode := NewChild;
+                AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(InfEmp.Name), 'sii', xmlns_sii, NewChild);
+                AddElementWithPrefix(CurrNode, 'NIF', InfEmp."VAT Registration No.", 'sii', xmlns_sii, NewChild);
+            IF Tipo <> '' THEN BEGIN
+              CurrNode := CurrNode.ParentNode;
+              AddElementWithPrefix(CurrNode, 'TipoComunicacion', Tipo, 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+            END;
+
+            CurrNode := CurrNode.ParentNode;
+            CurrNode := CurrNode.ParentNode;
+
+          // Factura
+          //AddElementWithPrefix(CurrNode, Registro, '', 'siiLR', xmlns_siiLR, NewChild);
+          Node := CurrNode;
+      END;
+    END;
+
+    LOCAL PROCEDURE GenerarCabConsulta@1000000028(pTipo@1000000001 : 'E,R,B,C,P';Accion@1000000002 : Text[80];Ejercicio@1000000000 : Code[10];Periodo@1000000003 : Code[10];TabDocSII@1000000009 : Record 88208);
+    VAR
+      qVersion@1000000004 : Code[10];
+    BEGIN
+      XMLDoc := XMLDoc.XmlDocument;
+
+      GetCfg;
+
+      IF FunSII.DevEnPruebas THEN
+        qVersion := Version
+      ELSE
+        qVersion := VersionPROD;
+
+      WITH XMLDOMMgt DO BEGIN
+      WITH TabDocSII DO BEGIN
+        AddRootElementWithPrefix(XMLDoc, 'Envelope', 'soapenv', Envelop, NewChild);
+        AddAttribute(NewChild, 'xmlns:soapenv', Envelop);
+        AddAttribute(NewChild, 'xmlns:con', xmlns_con);
+        AddAttribute(NewChild, 'xmlns:sum', xmlns_sum);
+
+        CurrNode := NewChild;
+        // Header
+        AddElementWithPrefix(CurrNode, 'Header', '', 'soapenv', Envelop, NewChild);
+
+        // Body
+        AddElementWithPrefix(CurrNode, 'Body', '', 'soapenv', Envelop, NewChild);
+          CurrNode := NewChild;
+          AddElementWithPrefix(CurrNode, Accion, '', 'con', xmlns_con, NewChild);
+          CurrNode := NewChild;
+
+          // Cabecera
+          AddElementWithPrefix(CurrNode,'Cabecera','', 'sum', xmlns_sum, NewChild);
+            CurrNode := NewChild;
+            AddElementWithPrefix(CurrNode, 'IDVersionSii', qVersion, 'sum', xmlns_sum, NewChild);
+            AddElementWithPrefix(CurrNode, 'Titular', '', 'sum', xmlns_sum, NewChild);
+              CurrNode := NewChild;
+              AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(InfEmp.Name), 'sum', xmlns_sum, NewChild);
+              AddElementWithPrefix(CurrNode, 'NIF', InfEmp."VAT Registration No.", 'sum', xmlns_sum, NewChild);
+              CurrNode := CurrNode.ParentNode;
+            CurrNode := CurrNode.ParentNode;
+          // Filtro
+          CASE pTipo OF
+            pTipo::E,pTipo::R,pTipo::B:
+              BEGIN
+                AddElementWithPrefix(CurrNode, 'FiltroConsulta', '', 'con', xmlns_con, NewChild);
+                  CurrNode := NewChild;
+                  AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sum', xmlns_sum, NewChild);
+                    CurrNode := NewChild;
+                    AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sum', xmlns_sum, NewChild);
+                    AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sum', xmlns_sum, NewChild);
+                    CurrNode := CurrNode.ParentNode;
+      //            CurrNode := CurrNode.ParentNode;
+              END;
+
+            pTipo::C:
+              BEGIN
+                AddElementWithPrefix(CurrNode, 'FiltroConsultaCobros', '', 'con', xmlns_con, NewChild);
+                CurrNode := NewChild;
+              END;
+
+            pTipo::P:
+              BEGIN
+                AddElementWithPrefix(CurrNode, 'FiltroConsultaPagos', '', 'con', xmlns_con, NewChild);
+                CurrNode := NewChild;
+              END;
+
+          END;
+
+          IF (NIF <> '') AND (RazonSocial <> '') THEN BEGIN
+            IF pTipo = pTipo::E THEN BEGIN
+              AddElementWithPrefix(CurrNode, 'Contraparte', '', 'con', xmlns_con, NewChild);
+                CurrNode := NewChild;
+                AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sum', xmlns_sum, NewChild);
+                IF NOT IDOtro THEN
+                  AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sum', xmlns_sii, NewChild)
+                ELSE BEGIN
+                  AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sum', xmlns_sii, NewChild);
+                    CurrNode := NewChild;
+                    AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sum', xmlns_sii, NewChild);
+                    AddElementWithPrefix(CurrNode, 'IDType', GetIDTipo(IDTipo,"Cod. pais"), 'sum', xmlns_sii, NewChild);
+                    AddElementWithPrefix(CurrNode, 'ID', NIF, 'sum', xmlns_sii, NewChild);
+                    CurrNode := CurrNode.ParentNode;
+                END;
+                CurrNode := CurrNode.ParentNode;
+            END;
+
+            IF (pTipo = pTipo::R) OR (pTipo = pTipo::B) OR (pTipo = pTipo::P) THEN BEGIN
+              AddElementWithPrefix(CurrNode, 'IDFactura', '', 'con', xmlns_con, NewChild);
+                CurrNode := NewChild;
+                AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sum', xmlns_sum, NewChild);
+                  CurrNode := NewChild;
+                  AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sum', xmlns_sum, NewChild);
+                  IF NOT IDOtro THEN
+                    AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sum', xmlns_sum, NewChild)
+                  ELSE BEGIN
+                    AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sum', xmlns_sii, NewChild);
+                      CurrNode := NewChild;
+                      AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sum', xmlns_sii, NewChild);
+                      AddElementWithPrefix(CurrNode, 'IDType', GetIDTipo(IDTipo,"Cod. pais"), 'sum', xmlns_sii, NewChild);
+                      AddElementWithPrefix(CurrNode, 'ID', NIF, 'sum', xmlns_sii, NewChild);
+                      CurrNode := CurrNode.ParentNode;
+                  END;
+                  CurrNode := CurrNode.ParentNode;
+                //CurrNode := CurrNode.ParentNode;
+            END;
+
+            IF (pTipo = pTipo::P) THEN BEGIN
+              AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor',  DocumentoTercero, 'sum', xmlns_sum, NewChild);
+              AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha documento"), 'sum', xmlns_sum, NewChild);
+            END;
+
+          END;
+        END;
+      END;
+    END;
+
+    PROCEDURE "<<-----Emitidos"@1000000024();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarDocEmitido@1000000014(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    VAR
+      MemSII@1000000002 : Record 88202;
+      RefDocu@1000000003 : RecordRef;
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRFacturasEmitidas');
+      IF GenLinEmitido('RegistroLRFacturasEmitidas', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    LOCAL PROCEDURE GenLinEmitido@1000000001(Registro@1000000003 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000005 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    VAR
+      EsUE@1000000004 : Boolean;
+      qNIF@1000000001 : Code[20];
+      NoIdent@1000000002 : Boolean;
+      ClaveOperacion@1000000007 : Code[10];
+      DesgloseOperacionNIF@1000000006 : Boolean;
+      FechaExpedicion@1000000008 : Date;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        CogerPeriodoImpositivo(Fecha);
+        CalcImportes(TabDocSII);
+
+        IF Es1S2017 THEN BEGIN
+          ClaveOperacion := CO_1S_E;
+          TextoRegistro := DESC_1S;
+        END ELSE
+          ClaveOperacion := FORMAT("Clave operacion");
+
+        TiposImpuestos(FALSE, NMov, ClaveOperacion);
+
+        qNIF := NIF; // CogerNIF(0, Documento, NIF);
+
+        NoIdent := FALSE;
+        IF (TabDocSII."Codigo Error" = ERROR_NIF) THEN BEGIN
+          IDOtro := NOT FunWS.CalidadDatos(NIF, RazonSocial, TRUE);
+          NoIdent := IDOtro;
+          IF NoIdent THEN
+            "Cod. pais" := 'ES';
+        END;
+
+        FechaExpedicion := Fecha;
+        IF CfgSII."Use document date in Sales" THEN
+          IF "Fecha documento" <> 0D THEN
+            FechaExpedicion := "Fecha documento";
+
+        IF EsTipoRectificativa("Tipo factura") THEN BEGIN
+         IF "Tipo factura rectificativa" = '' THEN
+           "Tipo factura rectificativa" := 'I';
+        END ELSE
+         "Tipo factura rectificativa" := '';
+
+        WITH XMLDOMMgt DO BEGIN
+        // Factura
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NIF', InfEmp."VAT Registration No.", 'sii', xmlns_sii, NewChild);
+             CurrNode := CurrNode.ParentNode;
+             IF "Tipo factura" = FACT_RESUMEN THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor',  "Factura resumen inicio", 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisorResumenFin',  "Factura resumen fin", 'sii', xmlns_sii, NewChild);
+             END ELSE BEGIN
+              AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', Documento, 'sii', xmlns_sii, NewChild);
+             END;
+             AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii(FechaExpedicion), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'FacturaExpedida', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'TipoFactura', "Tipo factura", 'sii', xmlns_sii, NewChild);
+
+           IF "Tipo factura rectificativa" <> '' THEN BEGIN
+             AddElementWithPrefix(CurrNode, 'TipoRectificativa', "Tipo factura rectificativa", 'sii', xmlns_sii, NewChild);
+             IF "Factura corregida" <> '' THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'FacturasRectificadas', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'IDFacturaRectificada', '', 'sii', xmlns_sii, NewChild);
+                   CurrNode := NewChild;
+                   AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', "Factura corregida", 'sii', xmlns_sii, NewChild);
+                   IF "Fecha factura corregida" <> 0D THEN
+                     AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha factura corregida"), 'sii', xmlns_sii, NewChild);
+                   CurrNode := CurrNode.ParentNode;
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             IF "Tipo factura rectificativa" <> 'I' THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'ImporteRectificacion', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'BaseRectificada', ConvDec2Str("Base rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'CuotaRectificada', ConvDec2Str("Cuota rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'CuotaRecargoRectificado', ConvDec2Str("Recargo rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+           END;
+
+           IF ("Fecha operacion" <> "Fecha documento") AND ("Fecha operacion" <> 0D) THEN
+             AddElementWithPrefix(CurrNode, 'FechaOperacion', Date2Sii("Fecha operacion"), 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'ClaveRegimenEspecialOTrascendencia', ClaveOperacion, 'sii', xmlns_sii, NewChild);
+           IF NOT Es1S2017 THEN
+             AddElementWithPrefix(CurrNode, 'ImporteTotal', gblTotalAmount1, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'DescripcionOperacion', TextoRegistro, 'sii', xmlns_sii, NewChild);
+
+           IF "Situacion inmueble" <> '' THEN BEGIN
+             AddElementWithPrefix(CurrNode, 'DatosInmueble', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'DetalleInmueble', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'SituacionInmueble', "Situacion inmueble", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ReferenciaCatastral', "Referencia catastral", 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+               CurrNode := CurrNode.ParentNode;
+           END;
+
+           IF TabDocSII."Emitida por terceros" = 'S' THEN
+             AddElementWithPrefix(CurrNode, 'EmitidaPorTerceros', 'S', 'sii', xmlns_sii, NewChild);
+
+           IF  ("Tipo factura" <> FACT_SIMPLIFICADA) AND ("Tipo factura" <> RECT_SIMPLIFICADA) AND
+               ("Tipo factura" <> FACT_RESUMEN) THEN BEGIN
+            AddElementWithPrefix(CurrNode, 'Contraparte', '', 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+              AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+              IF NOT IDOtro THEN
+                AddElementWithPrefix(CurrNode, 'NIF', qNIF, 'sii', xmlns_sii, NewChild)
+              ELSE BEGIN
+                AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                  CurrNode := NewChild;
+                  AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                  AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais", NoIdent), 'sii', xmlns_sii, NewChild);
+                  AddElementWithPrefix(CurrNode, 'ID', qNIF, 'sii', xmlns_sii, NewChild);
+                  CurrNode := CurrNode.ParentNode;
+              END;
+              CurrNode := CurrNode.ParentNode;
+           END;
+
+           AddElementWithPrefix(CurrNode, 'TipoDesglose', '', 'sii', xmlns_sii, NewChild);
+
+      // Aqu° habr† que poner las distintas opciones en base al tipo de operaci¢n
+
+             // IGIC o IPSI
+             IF (ClaveOperacion = CO_IGIC_IPSI) THEN BEGIN
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'DesgloseTipoOperacion', '' , 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'Entrega', '', 'sii', xmlns_sii, NewChild);
+                   CurrNode := NewChild;
+                   AddElementWithPrefix(CurrNode, 'NoSujeta', '', 'sii', xmlns_sii, NewChild);
+                     CurrNode := NewChild;
+                     AddElementWithPrefix(CurrNode, 'ImporteTAIReglasLocalizacion', gblTotalAmount1, 'sii', xmlns_sii, NewChild);
+             END ELSE BEGIN
+               DesgloseOperacionNIF := (COPYSTR(qNIF, 1, 1) = NIF_DESGLOSE_OPERACION);
+               IF (NOT IDOtro OR NoIdent) AND NOT DesgloseOperacionNIF THEN
+                 DesgloseFactura("Causa Exenci¢n")
+               ELSE
+                 DesgloseOperacion(PaisUE("Cod. pais"));
+             END;
+        END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE BajaDocEmitido@1000000019(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    VAR
+      MemSII@1000000002 : Record 88202;
+      RefDocu@1000000001 : RecordRef;
+    BEGIN
+      GenCabecera(Node, '', 'BajaLRFacturasEmitidas' );
+      GenLinEmitidoBaja('RegistroLRBajaExpedidas', TabDocSII, Node);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE GenLinEmitidoBaja@1000000008(Registro@1000000001 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode");
+    VAR
+      ArchivoXML@1000000002 : Text[250];
+      RutaXML@1000000003 : Text[250];
+      NodeText@1000000016 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF87-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMText";
+      Vent@1000000034 : Dialog;
+    BEGIN
+      GetCfg;
+
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+
+      WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NIF', InfEmp."VAT Registration No.", 'sii', xmlns_sii, NewChild);
+             CurrNode := CurrNode.ParentNode;
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', TabDocSII.Documento, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii(TabDocSII.Fecha), 'sii', xmlns_sii, NewChild);
+      END;
+    END;
+
+    PROCEDURE ConsultarEmitidasEnviadas@1000000005(TabDocSII@1000000005 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+      GenerarCabConsulta(0, 'ConsultaLRFacturasEmitidas', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----Recibidos"@1000000026();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarDocRecibido@1100288002(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    VAR
+      MemSII@1000000003 : Record 88202;
+      RefDocu@1000000002 : RecordRef;
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRFacturasRecibidas');
+      IF GenLinRecibido('RegistroLRFacturasRecibidas', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    LOCAL PROCEDURE GenLinRecibido@1100288003(Registro@1000000001 : Text[80];TabDocSII@1000000007 : Record 88208;Node@1000000006 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    VAR
+      ClaveOperacion@1000000000 : Code[10];
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        IF Es1S2017 THEN
+          Fecha := TODAY;
+
+        CogerPeriodoImpositivo(Fecha);
+
+        CalcImportes(TabDocSII);
+
+        IF Es1S2017 THEN BEGIN
+          ClaveOperacion := CO_1S_R;
+          TextoRegistro := DESC_1S;
+        END ELSE
+         ClaveOperacion := FORMAT("Clave operacion");
+
+        TiposImpuestos(TRUE, NMov, ClaveOperacion);
+
+        IF EsTipoRectificativa("Tipo factura") THEN BEGIN
+         IF "Tipo factura rectificativa" = '' THEN
+           "Tipo factura rectificativa" := 'I';
+        END ELSE
+         "Tipo factura rectificativa" := '';
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+
+           IF NOT IDOtro THEN
+             AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+           ELSE BEGIN
+             AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+               CurrNode := CurrNode.ParentNode;
+           END;
+           CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', DocumentoTercero, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha documento"), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'FacturaRecibida', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'TipoFactura', "Tipo factura", 'sii', xmlns_sii, NewChild);
+
+           IF "Tipo factura rectificativa" <> '' THEN BEGIN
+             AddElementWithPrefix(CurrNode, 'TipoRectificativa', "Tipo factura rectificativa", 'sii', xmlns_sii, NewChild);
+             IF "Factura corregida" <> '' THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'FacturasRectificadas', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'IDFacturaRectificada', '', 'sii', xmlns_sii, NewChild);
+                   CurrNode := NewChild;
+                   AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', "Factura corregida", 'sii', xmlns_sii, NewChild);
+                   IF "Fecha factura corregida" <> 0D THEN
+                     AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha factura corregida"), 'sii', xmlns_sii, NewChild);
+                   CurrNode := CurrNode.ParentNode;
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             IF "Tipo factura rectificativa" <> 'I' THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'ImporteRectificacion', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'BaseRectificada', ConvDec2Str("Base rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'CuotaRectificada', ConvDec2Str("Cuota rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'CuotaRecargoRectificado', ConvDec2Str("Recargo rectificada", 2), 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+           END;
+
+           IF ("Fecha operacion" <> "Fecha documento") AND ("Fecha operacion" <> 0D) THEN
+             AddElementWithPrefix(CurrNode, 'FechaOperacion', Date2Sii("Fecha operacion"), 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'ClaveRegimenEspecialOTrascendencia', ClaveOperacion, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'DescripcionOperacion', TextoRegistro, 'sii', xmlns_sii, NewChild);
+
+           AddElementWithPrefix(CurrNode, 'DesgloseFactura', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+             CLEAR(MemFacturaE);
+             MemFacturaE.SETCURRENTKEY(Tipo);
+             MemFacturaE.SETRANGE(Tipo, MemFacturaE.Tipo::Impuestos);
+
+             // Si es Inversi¢n del Sujeto pasivo
+             MemFacturaE.SETRANGE("Inversion sujeto pasivo", TRUE);
+             IF MemFacturaE.FIND('-') THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'InversionSujetoPasivo', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               REPEAT
+                 AddElementWithPrefix(CurrNode, 'DetalleIVA', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                   AddElementWithPrefix(CurrNode, 'TipoImpositivo', MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
+                   AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii, NewChild);
+                   IF NOT Es1S2017 THEN
+                     AddElementWithPrefix(CurrNode, 'CuotaSoportada', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+               UNTIL MemFacturaE.NEXT = 0;
+               CurrNode := CurrNode.ParentNode;
+             END;
+
+             MemFacturaE.SETRANGE("Inversion sujeto pasivo", FALSE);
+             IF MemFacturaE.FIND('-') THEN BEGIN
+               AddElementWithPrefix(CurrNode, 'DesgloseIVA', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               REPEAT
+                 AddElementWithPrefix(CurrNode, 'DetalleIVA', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 IF (ClaveOperacion  = RE_AGR) THEN BEGIN
+                   AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii, NewChild);
+                   AddElementWithPrefix(CurrNode, 'PorcentCompensacionREAGYP', MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
+                   AddElementWithPrefix(CurrNode, 'ImporteCompensacionREAGYP', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii, NewChild);
+                 END ELSE BEGIN
+                   IF NOT Es1S2017 THEN
+                     AddElementWithPrefix(CurrNode, 'TipoImpositivo', MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
+                   AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii, NewChild);
+                   IF NOT Es1S2017 THEN
+                     AddElementWithPrefix(CurrNode, 'CuotaSoportada', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii, NewChild);
+                 END;
+                 CurrNode := CurrNode.ParentNode;
+               UNTIL MemFacturaE.NEXT = 0;
+               CurrNode := CurrNode.ParentNode;
+             END;
+           CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'Contraparte', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+
+             IF NOT IDOtro THEN
+               AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+
+           IF CfgSII."Use creation date as posting" THEN
+             IF "Creation date" <> 0D THEN
+               Fecha := "Creation date";
+           IF Es1S2017 THEN
+             Fecha := TODAY;
+           AddElementWithPrefix(CurrNode, 'FechaRegContable', Date2Sii(Fecha), 'sii', xmlns_sii, NewChild);
+           IF Es1S2017 THEN
+             gblTotalAmount2 := '0.00';
+           AddElementWithPrefix(CurrNode, 'CuotaDeducible', gblTotalAmount2, 'sii', xmlns_sii, NewChild);
+        END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE BajaDocRecibido@1100288001(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    VAR
+      MemSII@1000000002 : Record 88202;
+      RefDocu@1000000001 : RecordRef;
+    BEGIN
+      GenCabecera(Node, '', 'BajaLRFacturasRecibidas' );
+      GenLinRecibidoBaja('RegistroLRBajaRecibidas', TabDocSII, Node);
+      EXIT(GenerarXML);
+    END;
+
+    PROCEDURE ConsultarRecibidasEnviadas@1100288000(TabDocSII@1000000005 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+      GenerarCabConsulta(1,'ConsultaLRFacturasRecibidas', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE GenLinRecibidoBaja@1000000018(Registro@1000000001 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode");
+    VAR
+      ArchivoXML@1000000002 : Text[250];
+      RutaXML@1000000003 : Text[250];
+      NodeText@1000000016 : Automation "{F5078F18-C551-11D3-89B9-0000F81FE221} 3.0:{2933BF87-7B36-11D2-B20E-00C04F983E60}:'Microsoft XML, v3.0'.IXMLDOMText";
+      Vent@1000000034 : Dialog;
+    BEGIN
+      GetCfg;
+
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+
+      WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(TabDocSII.RazonSocial), 'sii', xmlns_sii, NewChild);
+             IF NOT TabDocSII.IDOtro THEN
+               AddElementWithPrefix(CurrNode, 'NIF', TabDocSII.NIF, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', TabDocSII."Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(TabDocSII.IDTipo, TabDocSII."Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', TabDocSII.NIF, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', TabDocSII.DocumentoTercero, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii(TabDocSII."Fecha documento"), 'sii', xmlns_sii, NewChild);
+      END;
+    END;
+
+    LOCAL PROCEDURE "<<-----BinenesInversion"@1000000035();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarBienInversion@1000000007(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    VAR
+      MemSII@1000000003 : Record 88202;
+      RefDocu@1000000002 : RecordRef;
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRBienesInversion');
+      IF GenLinBienInversion('RegistroLRBienesInversion', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    LOCAL PROCEDURE GenLinBienInversion@1000000023(Registro@1000000000 : Text[80];TabDocSII@1000000007 : Record 88208;Node@1000000006 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        CogerPeriodoImpositivoAnual(Fecha);
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+             IF NOT IDOtro THEN
+               AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', DocumentoTercero, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha documento"), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'BinesInversion', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IdentificacionBien', "Identificacion Bien", 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaInicioUtilizacion', Date2Sii("Fecha Inicio Utilizacion"), 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'ProrrataAnualDefinitiva', ConvDec2Str("Prorrata anual definitiva", 2), 'sii', xmlns_sii, NewChild);
+        END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE BajaBienInversion@1000000021(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    VAR
+      MemSII@1000000002 : Record 88202;
+      RefDocu@1000000001 : RecordRef;
+    BEGIN
+      GenCabecera(Node, '', 'BajaLRBienesInversion');
+      GenLinRecibidoBaja('RegistroLRBajaBienesInversion', TabDocSII, Node);
+      EXIT(GenerarXML);
+    END;
+
+    PROCEDURE ConsultarBienesInvEnviados@1000000025(TabDocSII@1000000005 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivoAnual(TabDocSII.Fecha);
+      GenerarCabConsulta(2,'ConsultaLRBienesInversion', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----Cobros"@1000000043();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarCobroEmitidas@1000000044(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRCobrosEmitidas');
+      IF GenLinCobroEmitidas('RegistroLRCobros', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    PROCEDURE GenLinCobroEmitidas@1000000046(Registro@1000000002 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    VAR
+      RefDocu@1100000 : RecordRef;
+      Nacional@1100001 : Boolean;
+      EsUE@1000000004 : Boolean;
+      qNIF@1000000005 : Code[20];
+      Year@1100288000 : Integer;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        CALCFIELDS(Base, Cuota);
+        IF "Medio de pago/cobro" = '' THEN
+          "Medio de pago/cobro" := '04';
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+             IF NOT IDOtro THEN
+               AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', Documento, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii(Fecha), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'Cobros', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Cobro', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'Fecha', Date2Sii(Fecha), 'sii', xmlns_sii, NewChild);
+             AddElementWithPrefix(CurrNode, 'Importe', ConvDec2Str(Base+Cuota, 2), 'sii', xmlns_sii, NewChild);
+             AddElementWithPrefix(CurrNode, 'Medio', "Medio de pago/cobro", 'sii', xmlns_sii, NewChild);
+        END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE ConsultarCobros@1000000045(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+      GenerarCabConsulta(3, 'ConsultaCobros', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----Pagos"@1000000047();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarPagoRecibidas@1000000040(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRPagosRecibidas');
+      IF GenLinPagoRecibidas('RegistroLRPagos', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    PROCEDURE GenLinPagoRecibidas@1000000038(Registro@1000000002 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    VAR
+      RefDocu@1100000 : RecordRef;
+      Nacional@1100001 : Boolean;
+      EsUE@1000000004 : Boolean;
+      qNIF@1000000005 : Code[20];
+      Year@1100288000 : Integer;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        CALCFIELDS(Base, Cuota);
+        IF "Medio de pago/cobro" = '' THEN
+          "Medio de pago/cobro" := '04';
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+             IF NOT IDOtro THEN
+               AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', DocumentoTercero, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii("Fecha documento"), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'Pagos', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Pago', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'Fecha', Date2Sii(Fecha), 'sii', xmlns_sii, NewChild);
+             AddElementWithPrefix(CurrNode, 'Importe', ConvDec2Str(Base+Cuota, 2), 'sii', xmlns_sii, NewChild);
+             AddElementWithPrefix(CurrNode, 'Medio', "Medio de pago/cobro", 'sii', xmlns_sii, NewChild);
+        END;
+      END;
+
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE ConsultarPagos@1000000027(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+      GenerarCabConsulta(4, 'ConsultaPagos', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----OpIntracomunitarias"@1000000048();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarOpIntracomunitaria@1000000063(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRDetOperacionIntracomunitaria');
+      IF GenLinOpIntracomunitaria('RegistroLRDetOperacionIntracomunitaria', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    PROCEDURE GenLinOpIntracomunitaria@1000000062(Registro@1000000002 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    VAR
+      Year@1100288000 : Integer;
+      NIF1@1000000003 : Code[20];
+      NIF2@1000000004 : Code[20];
+      IDOtro1@1000000005 : Boolean;
+      IDOtro2@1000000006 : Boolean;
+      RazonSocial1@1000000007 : Text[120];
+      RazonSocial2@1000000008 : Text[120];
+    BEGIN
+      WITH TabDocSII DO BEGIN
+
+        GetCfg;
+
+        CogerPeriodoImpositivo(Fecha);
+
+        IF TipoSII = TipoSII::E THEN BEGIN
+          NIF1 := InfEmp."VAT Registration No.";
+          IDOtro1 := FALSE;
+          RazonSocial1 := ConvertStr40(InfEmp.Name);
+          NIF2 := NIF;
+          IDOtro2 := IDOtro;
+          RazonSocial2 := ConvertStr40(RazonSocial);
+        END ELSE BEGIN
+          NIF1 := NIF;
+          IDOtro1 := IDOtro;
+          RazonSocial1  := ConvertStr40(RazonSocial);
+          NIF2 := InfEmp."VAT Registration No.";
+          IDOtro2 := FALSE;
+          RazonSocial2 := ConvertStr40(InfEmp.Name);
+        END;
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'IDFactura', '', 'siiLR', xmlns_siiLR, NewChild);
+           CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'IDEmisorFactura', '', 'sii', xmlns_sii, NewChild);
+             CurrNode := NewChild;
+             AddElementWithPrefix(CurrNode, 'NombreRazon', RazonSocial1, 'sii', xmlns_sii, NewChild);
+             IF NOT IDOtro1 THEN
+               AddElementWithPrefix(CurrNode, 'NIF', NIF1, 'sii', xmlns_sii, NewChild)
+             ELSE BEGIN
+               AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+                 CurrNode := NewChild;
+                 AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+                 AddElementWithPrefix(CurrNode, 'ID', NIF1, 'sii', xmlns_sii, NewChild);
+                 CurrNode := CurrNode.ParentNode;
+             END;
+             CurrNode := CurrNode.ParentNode;
+
+           AddElementWithPrefix(CurrNode, 'NumSerieFacturaEmisor', Documento, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'FechaExpedicionFacturaEmisor', Date2Sii(Fecha), 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         CurrNode := CurrNode.ParentNode;
+         AddElementWithPrefix(CurrNode, 'Contraparte', '', 'siiLR', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'NombreRazon', RazonSocial2, 'sii', xmlns_sii, NewChild);
+           IF NOT IDOtro2 THEN
+             AddElementWithPrefix(CurrNode, 'NIF', NIF2, 'sii', xmlns_sii, NewChild)
+           ELSE BEGIN
+             AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'ID', NIF2, 'sii', xmlns_sii, NewChild);
+               CurrNode := CurrNode.ParentNode;
+           END;
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'OperacionIntracomunitaria', '', 'siiLR', xmlns_sii, NewChild);
+         CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'TipoOperacion', "Tipo operacion intracomu.", 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'ClaveDeclarado', "Clave declarado intracomu.", 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'EstadoMiembro', "Cod. pais", 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'DescripcionBienes', "Identificacion Bien", 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'DireccionOperador', TabDocSII.DireccionOperador, 'sii', xmlns_sii, NewChild);
+        END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE BajaOpIntracomunitaria@1000000061(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      GenCabecera(Node, '', 'BajaLRDetOperacionIntracomunitaria');
+      GenLinRecibidoBaja('RegistroLRBajaDetOperacionIntracomunitaria', TabDocSII, Node);
+      EXIT(GenerarXML);
+    END;
+
+    PROCEDURE ConsultarOpIntracomunitaria@1000000050(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivo(TabDocSII.Fecha);
+      GenerarCabConsulta(2, 'ConsultaLRDetOperIntracomunitarias', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----CobrosMetalico"@1000000074();
+    BEGIN
+    END;
+
+    PROCEDURE EnviarCobrosMetalico@1000000073(TabDocSII@1000000000 : Record 88208;Tipo@1000000001 : Code[10]) : Text[1024];
+    BEGIN
+      GenCabecera(Node, Tipo, 'SuministroLRCobrosMetalico');
+      IF GenLinCobrosMetalico('RegistroLRCobrosMetalico', TabDocSII, Node) THEN
+        EXIT(GenerarXML)
+      ELSE
+        EXIT('');
+    END;
+
+    PROCEDURE GenLinCobrosMetalico@1000000072(Registro@1000000002 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+        GetCfg;
+
+        CogerPeriodoImpositivoAnual(Fecha);
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         CurrNode := CurrNode.ParentNode;
+         AddElementWithPrefix(CurrNode, 'Contraparte', '', 'siiLR', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+
+           IF NOT IDOtro THEN
+             AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+           ELSE BEGIN
+             AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+               CurrNode := CurrNode.ParentNode;
+           END;
+           CurrNode := CurrNode.ParentNode;
+
+         AddElementWithPrefix(CurrNode, 'ImporteTotal', ConvDec2Str("Cobro Metalico", 2), 'siiLR', xmlns_sii, NewChild);
+        END;
+
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE BajaCobrosMetalico@1000000071(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      GenCabecera(Node, '', 'BajaLRCobrosMetalico');
+      GenLinCobrosMetalicoBaja('RegistroLRBajaCobrosMetalico', TabDocSII, Node);
+      EXIT(GenerarXML);
+    END;
+
+    PROCEDURE GenLinCobrosMetalicoBaja@1000000064(Registro@1000000002 : Text[80];TabDocSII@1000000000 : Record 88208;Node@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Boolean;
+    BEGIN
+      WITH TabDocSII DO BEGIN
+        GetCfg;
+
+        CogerPeriodoImpositivoAnual(Fecha);
+
+        WITH XMLDOMMgt DO BEGIN
+         AddElementWithPrefix(Node, Registro, '', 'siiLR', xmlns_siiLR, NewChild); // <----- Lo llevamos al detalle
+         CurrNode := NewChild;
+         AddElementWithPrefix(CurrNode, 'PeriodoImpositivo', '', 'sii', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'Ejercicio', Ejercicio, 'sii', xmlns_sii, NewChild);
+           AddElementWithPrefix(CurrNode, 'Periodo', Periodo, 'sii', xmlns_sii, NewChild);
+           CurrNode := CurrNode.ParentNode;
+
+         CurrNode := CurrNode.ParentNode;
+         AddElementWithPrefix(CurrNode, 'Contraparte', '', 'siiLR', xmlns_sii, NewChild);
+           CurrNode := NewChild;
+           AddElementWithPrefix(CurrNode, 'NombreRazon', ConvertStr40(RazonSocial), 'sii', xmlns_sii, NewChild);
+
+           IF NOT IDOtro THEN
+             AddElementWithPrefix(CurrNode, 'NIF', NIF, 'sii', xmlns_sii, NewChild)
+           ELSE BEGIN
+             AddElementWithPrefix(CurrNode, 'IDOtro', '', 'sii', xmlns_sii, NewChild);
+               CurrNode := NewChild;
+               AddElementWithPrefix(CurrNode, 'CodigoPais', "Cod. pais", 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'IDType', IDType(IDTipo, "Cod. pais",FALSE), 'sii', xmlns_sii, NewChild);
+               AddElementWithPrefix(CurrNode, 'ID', NIF, 'sii', xmlns_sii, NewChild);
+               CurrNode := CurrNode.ParentNode;
+           END;
+           CurrNode := CurrNode.ParentNode;
+
+        END;
+
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE ConsultarCobrosMetalico@1000000070(TabDocSII@1000000000 : Record 88208) : Text[1024];
+    BEGIN
+      CogerPeriodoImpositivoAnual(TabDocSII.Fecha);
+      GenerarCabConsulta(2, 'ConsultaLRCobrosMetalico', Ejercicio, Periodo, TabDocSII);
+      EXIT(GenerarXML);
+    END;
+
+    LOCAL PROCEDURE "<<-----Desglose"@1000000041();
+    BEGIN
+    END;
+
+    PROCEDURE DesgloseFactura@1000000002(CausaExencion@1000000000 : Code[10]);
+    BEGIN
+      CurrNode := NewChild;
+      AddElementWithPrefix(CurrNode, 'DesgloseFactura', '', 'sii', xmlns_sii, NewChild);
+      CLEAR(MemFacturaE);
+      MemFacturaE.SETCURRENTKEY(Tipo);
+      MemFacturaE.SETRANGE(Tipo, MemFacturaE.Tipo::Impuestos);
+      MemFacturaE.SETFILTER("Tipo IVA", '<>%1', MemFacturaE."Tipo IVA"::"No sujeto");
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'Sujeta', '', 'sii', xmlns_sii, NewChild);
+        NewChild2 := NewChild;
+
+          // Sujeta y Exenta
+          MemFacturaE.SETFILTER("Causa exencion", '<>%1', '');
+          IF MemFacturaE.FIND('-') THEN BEGIN
+            CurrNode := NewChild;
+            REPEAT
+              AddElementWithPrefix(CurrNode, 'Exenta', '', 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+                AddElementWithPrefix(CurrNode, 'CausaExencion', MemFacturaE."Causa exencion", 'sii', xmlns_sii, NewChild);// <-- Operaci¢n Sujeta No exenta
+                AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild);
+              CurrNode := CurrNode.ParentNode;
+            UNTIL MemFacturaE.NEXT = 0;
+            CurrNode := CurrNode.ParentNode;
+            NewChild := NewChild2;
+          END;
+
+          // Sujeta y no Exenta
+          MemFacturaE.SETFILTER("Causa exencion", '=%1', '');
+          IF MemFacturaE.FIND('-') THEN BEGIN
+            CurrNode := NewChild;
+            AddElementWithPrefix(CurrNode, 'NoExenta', '', 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+              AddElementWithPrefix(CurrNode, 'TipoNoExenta', MemFacturaE.Sujeta_NoExenta, 'sii', xmlns_sii, NewChild);
+              AddElementWithPrefix(CurrNode, 'DesgloseIVA', '', 'sii', xmlns_sii, NewChild);
+                CurrNode := NewChild;
+                REPEAT
+                  AddElementWithPrefix(CurrNode, 'DetalleIVA', '', 'sii', xmlns_sii, NewChild);
+                    CurrNode := NewChild;
+                    IF NOT Es1S2017 THEN
+                      AddElementWithPrefix(CurrNode,'TipoImpositivo',  MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
+                    AddElementWithPrefix(CurrNode,'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii,NewChild);
+                    IF NOT Es1S2017 THEN BEGIN
+                      AddElementWithPrefix(CurrNode,'CuotaRepercutida', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii,NewChild);
+                      IF MemFacturaE.ImporteRE <> 0 THEN BEGIN
+                        AddElementWithPrefix(CurrNode,'TipoRecargoEquivalencia',MemFacturaE.RE, 'sii', xmlns_sii,NewChild);
+                        AddElementWithPrefix(CurrNode,'CuotaRecargoEquivalencia',ConvDec2Str(MemFacturaE.ImporteRE,2), 'sii', xmlns_sii,NewChild);
+                      END;
+                    END;
+                    CurrNode := CurrNode.ParentNode;
+                UNTIL MemFacturaE.NEXT = 0;
+                CurrNode := CurrNode.ParentNode;
+              CurrNode := CurrNode.ParentNode;
+            CurrNode := CurrNode.ParentNode;
+          END;
+        NewChild := CurrNode;
+      END;
+
+      // No Sujeto
+      MemFacturaE.SETRANGE("Causa exencion");
+      MemFacturaE.SETRANGE("Tipo IVA", MemFacturaE."Tipo IVA"::"No sujeto");
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'NoSujeta', '', 'sii', xmlns_sii, NewChild);
+          CurrNode := NewChild;
+          REPEAT
+            IF NoSujetaLocal(MemFacturaE) THEN
+              AddElementWithPrefix(CurrNode, 'ImporteTAIReglasLocalizacion', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild)
+            ELSE
+              AddElementWithPrefix(CurrNode, 'ImportePorArticulos7_14_Otros', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild);
+          UNTIL MemFacturaE.NEXT = 0;
+          CurrNode := CurrNode.ParentNode;
+        CurrNode := CurrNode.ParentNode;
+      END;
+    END;
+
+    PROCEDURE DesgloseOperacion@1000000010(EsUE@1000000000 : Boolean);
+    VAR
+      CausaExencion@1000000001 : Code[10];
+    BEGIN
+      CurrNode := NewChild;
+      AddElementWithPrefix(CurrNode, 'DesgloseTipoOperacion', '', 'sii', xmlns_sii, NewChild);
+      CLEAR(MemFacturaE);
+      MemFacturaE.SETCURRENTKEY(Tipo);
+      MemFacturaE.SETRANGE(Tipo, MemFacturaE.Tipo::Impuestos);
+      MemFacturaE.SETRANGE(Service, TRUE);
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'PrestacionServicios', '', 'sii', xmlns_sii, NewChild);
+        DesgloseOperacion2;
+        CurrNode := CurrNode.ParentNode;
+      END;
+      MemFacturaE.SETRANGE(Service, FALSE);
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'Entrega', '', 'sii', xmlns_sii, NewChild);
+        DesgloseOperacion2;
+        CurrNode := CurrNode.ParentNode;
+      END;
+    END;
+
+    PROCEDURE DesgloseOperacion2@1000000065();
+    BEGIN
+      MemFacturaE.SETFILTER("Tipo IVA", '<>%1', MemFacturaE."Tipo IVA"::"No sujeto");
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'Sujeta', '', 'sii', xmlns_sii, NewChild);
+        NewChild2 := NewChild;
+
+          // Sujeta y Exenta
+          MemFacturaE.SETFILTER("Causa exencion", '<>%1', '');
+          IF MemFacturaE.FIND('-') THEN BEGIN
+            CurrNode := NewChild;
+            REPEAT
+              AddElementWithPrefix(CurrNode, 'Exenta', '', 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+                AddElementWithPrefix(CurrNode, 'CausaExencion', MemFacturaE."Causa exencion", 'sii', xmlns_sii, NewChild);// <-- Operaci¢n Sujeta No exenta
+                AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild);
+              CurrNode := CurrNode.ParentNode;
+            UNTIL MemFacturaE.NEXT = 0;
+            CurrNode := CurrNode.ParentNode;
+            NewChild := NewChild2;
+          END;
+
+          // Sujeta y no Exenta
+          MemFacturaE.SETFILTER("Causa exencion", '=%1', '');
+          IF MemFacturaE.FIND('-') THEN BEGIN
+            CurrNode := NewChild;
+            AddElementWithPrefix(CurrNode, 'NoExenta', '', 'sii', xmlns_sii, NewChild);
+              CurrNode := NewChild;
+              AddElementWithPrefix(CurrNode, 'TipoNoExenta', MemFacturaE.Sujeta_NoExenta, 'sii', xmlns_sii, NewChild);
+              AddElementWithPrefix(CurrNode, 'DesgloseIVA', '', 'sii', xmlns_sii, NewChild);
+                CurrNode := NewChild;
+                REPEAT
+                  AddElementWithPrefix(CurrNode, 'DetalleIVA', '', 'sii', xmlns_sii, NewChild);
+                    CurrNode := NewChild;
+                    IF NOT Es1S2017 THEN
+                     AddElementWithPrefix(CurrNode,'TipoImpositivo',  MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
+                    AddElementWithPrefix(CurrNode,'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii,NewChild);
+                    IF NOT Es1S2017 THEN BEGIN
+                      AddElementWithPrefix(CurrNode,'CuotaRepercutida', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii,NewChild);
+                      IF MemFacturaE.ImporteRE <> 0 THEN BEGIN
+                        AddElementWithPrefix(CurrNode,'TipoRecargoEquivalencia',MemFacturaE.RE, 'sii', xmlns_sii,NewChild);
+                        AddElementWithPrefix(CurrNode,'CuotaRecargoEquivalencia',ConvDec2Str(MemFacturaE.ImporteRE,2), 'sii', xmlns_sii,NewChild);
+                      END;
+                    END;
+                    CurrNode := CurrNode.ParentNode;
+                UNTIL MemFacturaE.NEXT = 0;
+                CurrNode := CurrNode.ParentNode;
+              CurrNode := CurrNode.ParentNode;
+            CurrNode := CurrNode.ParentNode;
+          END;
+        NewChild := CurrNode;
+      END;
+
+      // No Sujeto
+      MemFacturaE.SETRANGE("Causa exencion");
+      MemFacturaE.SETRANGE("Tipo IVA", MemFacturaE."Tipo IVA"::"No sujeto");
+      IF MemFacturaE.FIND('-') THEN BEGIN
+        CurrNode := NewChild;
+        AddElementWithPrefix(CurrNode, 'NoSujeta', '', 'sii', xmlns_sii, NewChild);
+          CurrNode := NewChild;
+          REPEAT
+            IF NoSujetaLocal(MemFacturaE) THEN
+              AddElementWithPrefix(CurrNode, 'ImporteTAIReglasLocalizacion', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild)
+            ELSE
+              AddElementWithPrefix(CurrNode, 'ImportePorArticulos7_14_Otros', ConvDec2Str(MemFacturaE.BaseIVA,2), 'sii', xmlns_sii, NewChild);
+          UNTIL MemFacturaE.NEXT = 0;
+          CurrNode := CurrNode.ParentNode;
+        CurrNode := CurrNode.ParentNode;
+      END;
+
+      NewChild := CurrNode.ParentNode;
+      MemFacturaE.SETRANGE("Tipo IVA");
+    END;
+
+    LOCAL PROCEDURE "<<-----Agrupados"@1000000042();
+    BEGIN
+    END;
+
+    PROCEDURE GenCabEmitido@1000000037();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRFacturasEmitidas');
+    END;
+
+    PROCEDURE GenDetEmitido@1000000036(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinEmitido('RegistroLRFacturasEmitidas', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabRecibido@1000000033();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRFacturasRecibidas');
+    END;
+
+    PROCEDURE GenDetRecibido@1000000029(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinRecibido('RegistroLRFacturasRecibidas', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabBienInversion@1000000052();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRBienesInversion');
+    END;
+
+    PROCEDURE GenDetBienInversion@1000000051(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinBienInversion('RegistroLRBienesInversion', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabCobroEmitidas@1000000060();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRCobrosEmitidas');
+    END;
+
+    PROCEDURE GenDetCobroEmitidas@1000000059(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinCobroEmitidas('RegistroLRCobros', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabPagoRecibidas@1000000058();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRPagosRecibidas');
+    END;
+
+    PROCEDURE GenDetPagoRecibidas@1000000057(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinPagoRecibidas('RegistroLRPagos', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabOpIntracomunitaria@1000000054();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRDetOperacionIntracomunitaria');
+    END;
+
+    PROCEDURE GenDetOpIntracomunitaria@1000000053(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinOpIntracomunitaria('RegistroLRDetOperacionIntracomunitaria', TabDocSII, Node);
+    END;
+
+    PROCEDURE GenCabCobrosMetalico@1000000056();
+    BEGIN
+      GenCabecera(Node, 'A0', 'SuministroLRCobrosMetalico');
+    END;
+
+    PROCEDURE GenDetCobrosMetalico@1000000055(TabDocSII@1000000000 : Record 88208);
+    BEGIN
+      GenLinCobrosMetalico('RegistroLRCobrosMetalico', TabDocSII, Node);
+    END;
+
+    PROCEDURE "<<--------XML"@1000000012();
+    BEGIN
+    END;
+
+    PROCEDURE GenerarXML@1000000030() : Text[1024];
+    BEGIN
+      FileName := FileMgt.ServerTempFileName('XML');
+      XMLDoc.Save(FileName);
+      //FileMgt.DownloadToFile(FileName, 'c:\paso\req2013.xml');
+      EXIT(FileName);
+    END;
+
+    PROCEDURE SalvarXML@1000000017();
+    VAR
+      FileNameCli@1000000000 : Text;
+    BEGIN
+      FileName := FileMgt.ServerTempFileName('XML');
+      XMLDoc.Save(FileName);
+      FileNameCli := FileMgt.ClientTempFileName('XML');
+      FunSII.DownloadToFileSilent(FileName, FileNameCli);
+    END;
+
+    PROCEDURE RemoveInvalidChars@1000000013(PassedStr@1000000000 : Text[1024]) : Text[1024];
+    BEGIN
+      PassedStr := DELCHR(PassedStr,'=','|');
+      PassedStr := RemoveExtraWhiteSpaces(PassedStr);
+      EXIT(PassedStr);
+    END;
+
+    PROCEDURE RemoveExtraWhiteSpaces@1000000016(StrParam@1000000000 : Text[1024]) StrReturn : Text[1024];
+    VAR
+      Cntr1@1000000002 : Integer;
+      Cntr2@1000000003 : Integer;
+      WhiteSpaceFound@1000000001 : Boolean;
+    BEGIN
+      StrParam := DELCHR(StrParam,'<>',' ');
+      WhiteSpaceFound := FALSE;
+      Cntr2 := 1;
+      FOR Cntr1 := 1 TO STRLEN(StrParam) DO BEGIN
+        IF StrParam[Cntr1] <> ' ' THEN BEGIN
+          WhiteSpaceFound := FALSE;
+          StrReturn[Cntr2] := StrParam[Cntr1];
+          Cntr2 += 1;
+        END ELSE BEGIN
+          IF NOT WhiteSpaceFound THEN BEGIN
+            WhiteSpaceFound := TRUE;
+            StrReturn[Cntr2] := StrParam[Cntr1];
+            Cntr2 += 1;
+          END;
+        END;
+      END;
+    END;
+
+    PROCEDURE AppendProcessingInstruction@1000000022(VAR Parent@1100000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";Target@1100001 : Text[80];Data@1100002 : Text[250]);
+    VAR
+      ProcessingInstruction@1100003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlProcessingInstruction";
+    BEGIN
+      ProcessingInstruction := XMLDoc.CreateProcessingInstruction(Target,Data);
+      Parent.AppendChild(ProcessingInstruction);
+    END;
+
+    PROCEDURE AddRootElementWithPrefix@1(VAR XMLNode@1001 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";NodeName@1002 : Text;Prefix@1003 : Text;NameSpace@1004 : Text;VAR CreatedXMLNode@1005 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") ExitStatus@1000 : Integer;
+    VAR
+      NewChildNode@1006 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      CreatedXMLNode := XMLDoc.CreateElement(Prefix,NodeName,NameSpace);
+      XMLDoc.AppendChild(CreatedXMLNode);
+    END;
+
+    PROCEDURE AddElementWithPrefix@1000000009(VAR XMLNode@1001 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";NodeName@1002 : Text;NodeText@1000000000 : Text;Prefix@1003 : Text;NameSpace@1004 : Text;VAR CreatedXMLNode@1005 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") ExitStatus@1000 : Integer;
+    VAR
+      NewChildNode@1006 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      NewChildNode := XMLNode.OwnerDocument.CreateElement(Prefix,NodeName,NameSpace);
+      EXIT(AddElementToNode(XMLNode,NewChildNode,NodeText,CreatedXMLNode));
+    END;
+
+    PROCEDURE AddElementToNode@1000000003(VAR XMLNode@1001 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";VAR NewChildNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";NodeText@1003 : Text[250];VAR CreatedXMLNode@1005 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") ExitStatus@1000 : Integer;
+    BEGIN
+      IF ISNULL(NewChildNode) THEN BEGIN
+        ExitStatus := 50;
+        EXIT;
+      END;
+
+      IF NodeText <> '' THEN
+        NewChildNode.InnerText := NodeText;
+
+      XMLNode.AppendChild(NewChildNode);
+      CreatedXMLNode := NewChildNode;
+
+      ExitStatus := 0;
+    END;
+
+    PROCEDURE "<<------Varios"@1000000031();
+    BEGIN
+    END;
+
+    LOCAL PROCEDURE CalcImportes@1000000049(TabDocSII@1000000000 : Record 88208);
+    VAR
+      qEmpresa@1000000001 : Text[30];
+    BEGIN
+      WITH TabDocSII DO BEGIN
+        qEmpresa := GblSII.GetGblEmpresa;
+
+        IF qEmpresa <> '' THEN
+          CHANGECOMPANY(qEmpresa);
+
+        CALCFIELDS(Base, Cuota);
+        gblTotalAmount1 := ConvDec2Str(Base+Cuota, 2);
+        gblTotalAmount2 := ConvDec2Str(Cuota, 2);
+      END;
+    END;
+
+    LOCAL PROCEDURE TiposImpuestos@1000000006(Recibido@1000000010 : Boolean;NumMov@1000000000 : Integer;ClaveOperacion@1000000002 : Code[10]) : Boolean;
+    VAR
+      MemFacturaE2@1000000001 : TEMPORARY Record 88202;
+      i@1000000003 : Integer;
+      qEmpresa@1000000008 : Text[30];
+      LinDocSII@1000000005 : Record 88209;
+      AcumCuota@1000000007 : Decimal;
+      AcumCuota2@1000000011 : Decimal;
+      AcumCuotaReversion@1000000012 : Decimal;
+      AcumBase@1000000006 : Decimal;
+    BEGIN
+      qEmpresa := GblSII.GetGblEmpresa;
+
+      IF qEmpresa <> '' THEN BEGIN
+        LinDocSII.CHANGECOMPANY(qEmpresa);
+      END;
+
+      CLEAR(MemFacturaE);
+      MemFacturaE.DELETEALL;
+      i := 0;
+
+      LinDocSII.SETRANGE(NMovDoc, NumMov);
+      IF LinDocSII.FIND('-') THEN REPEAT
+        i := i + 1;
+        CLEAR(MemFacturaE2);
+        MemFacturaE2.NMov := i;
+        MemFacturaE2.Tipo := MemFacturaE2.Tipo::Impuestos;
+        MemFacturaE2."Tipo IVA" := LinDocSII."Tipo IVA";
+        MemFacturaE2.TaxTypeCode := ClaveOperacion;
+        MemFacturaE2.Sujeta_NoExenta := LinDocSII.Sujeta_NoExenta;
+        MemFacturaE2."Inversion sujeto pasivo" := LinDocSII."Inversion sujeto pasivo";
+        MemFacturaE2."Causa exencion" := LinDocSII."Causa exencion";
+        MemFacturaE2.Service := LinDocSII.Service;
+        MemFacturaE2."Tipo No Sujeto" := LinDocSII."Tipo No Sujeto";
+
+        IF (LinDocSII."%IVA" <> 0) AND (MemFacturaE2."Tipo IVA" = MemFacturaE2."Tipo IVA"::Normal) THEN BEGIN
+          IF LinDocSII.Sujeta_NoExenta = '' THEN
+            MemFacturaE2.Sujeta_NoExenta := 'S1'
+          ELSE
+            MemFacturaE2.Sujeta_NoExenta := LinDocSII.Sujeta_NoExenta;
+        END;
+
+        IF NOT LinDocSII."Inversion sujeto pasivo" THEN BEGIN
+          IF (LinDocSII."%IVA" = 0) AND (MemFacturaE2."Tipo IVA" = MemFacturaE2."Tipo IVA"::Normal) THEN BEGIN
+            IF (LinDocSII."Tipo No Sujeto" = LinDocSII."Tipo No Sujeto"::" ") THEN BEGIN
+              MemFacturaE2."Tipo IVA" := MemFacturaE2."Tipo IVA"::Exento;
+              IF MemFacturaE2."Causa exencion" = '' THEN BEGIN
+                IF ClaveOperacion = CO_EXPORT THEN
+                  MemFacturaE2."Causa exencion" := 'E2'
+                ELSE
+                  MemFacturaE2."Causa exencion" := 'E1';     // <----------- Causa exenci¢n por defecto
+              END;
+            END ELSE BEGIN
+              MemFacturaE2."Tipo IVA" := MemFacturaE2."Tipo IVA"::"No sujeto";
+              MemFacturaE2."Causa exencion" := '';
+            END;
+          END;
+        END;
+
+        IF (LinDocSII."Tipo IVA" = LinDocSII."Tipo IVA"::Reversi¢n) THEN
+          IF MemFacturaE2."Causa exencion" = '' THEN
+            MemFacturaE2."Causa exencion" := 'E5';
+
+        MemFacturaE2.IVA := ConvDec2Str(LinDocSII."%IVA", 2);
+        MemFacturaE2.BaseIVA := LinDocSII.Base;
+
+        //Importe IVA
+        MemFacturaE2.ImporteIVA := LinDocSII.Cuota;
+
+        // Recargo de equivalencia
+        IF (LinDocSII."%RE" <> 0) THEN BEGIN
+          MemFacturaE2.RE := ConvDec2Str(LinDocSII."%RE", 2);
+          MemFacturaE2.ImporteRE := LinDocSII.ImporteRE;
+          AcumCuota := AcumCuota + LinDocSII.ImporteRE;
+          AcumCuota2 := AcumCuota2 + LinDocSII.ImporteRE;
+        END ELSE BEGIN
+          MemFacturaE2.RE := ConvDec2Str(0, 2);
+        END;
+
+        IF Recibido THEN BEGIN
+          AcumCuota := AcumCuota + LinDocSII."Cuota deducible";
+          IF (LinDocSII."Tipo IVA" = LinDocSII."Tipo IVA"::Reversi¢n) THEN
+            AcumCuotaReversion := AcumCuotaReversion + LinDocSII."Cuota deducible";
+        END ELSE BEGIN
+          AcumCuota := AcumCuota + LinDocSII.Cuota;
+          IF (LinDocSII."Tipo IVA" = LinDocSII."Tipo IVA"::Reversi¢n) THEN
+            AcumCuotaReversion := AcumCuotaReversion + LinDocSII.Cuota;
+        END;
+        AcumCuota2 := AcumCuota2 + LinDocSII.Cuota;
+        AcumBase  := AcumBase + LinDocSII.Base;
+
+        IF Es1S2017 THEN BEGIN
+          MemFacturaE2.Sujeta_NoExenta  := 'S1';
+          IF NOT LinDocSII."Inversion sujeto pasivo" THEN BEGIN
+            MemFacturaE2.IVA := '';
+            MemFacturaE2.RE := '';
+          END;
+          MemFacturaE2."Tipo IVA" := MemFacturaE2."Tipo IVA"::Normal;
+      //    MemFacturaE2."Inversion sujeto pasivo" := FALSE;
+          MemFacturaE2."Causa exencion" := '';
+        END;
+
+        MemFacturaE2.BaseIVA    := MemFacturaE2.BaseIVA + LinDocSII."Base no realizada";
+        AcumBase  := AcumBase + LinDocSII."Base no realizada";
+        MemFacturaE2.ImporteIVA := MemFacturaE2.ImporteIVA + LinDocSII."Importe no realizado";
+        AcumCuota := AcumCuota + LinDocSII."Importe no realizado";
+        AcumCuota2 := AcumCuota2 + LinDocSII."Importe no realizado";
+
+        IF NOT LinDocSII.Retencion THEN BEGIN
+          MemFacturaE.SETRANGE(IVA, MemFacturaE2.IVA);
+          MemFacturaE.SETRANGE(RE, MemFacturaE2.RE);
+          MemFacturaE.SETRANGE("Tipo IVA", MemFacturaE2."Tipo IVA");
+          MemFacturaE.SETRANGE("Inversion sujeto pasivo", MemFacturaE2."Inversion sujeto pasivo");
+          MemFacturaE.SETRANGE(Service, MemFacturaE2.Service);
+          MemFacturaE.SETRANGE("Causa exencion", MemFacturaE2."Causa exencion");
+          MemFacturaE.SETRANGE("Tipo No Sujeto", MemFacturaE2."Tipo No Sujeto");
+          IF MemFacturaE.FINDFIRST THEN BEGIN
+            MemFacturaE.BaseIVA    := MemFacturaE.BaseIVA + MemFacturaE2.BaseIVA;
+            MemFacturaE.ImporteIVA := MemFacturaE.ImporteIVA + MemFacturaE2.ImporteIVA;
+            MemFacturaE.ImporteRE  := MemFacturaE.ImporteRE + MemFacturaE2.ImporteRE;
+            MemFacturaE.MODIFY;
+          END ELSE BEGIN
+            MemFacturaE := MemFacturaE2;
+            MemFacturaE.INSERT;
+          END;
+        END;
+      UNTIL LinDocSII.NEXT =0;
+
+      CLEAR(MemFacturaE);
+      Total_EntregaBienes := 0;
+      Total_PrestacionServicios := 0;
+      IF MemFacturaE.FIND('-') THEN REPEAT
+        IF MemFacturaE.Service THEN
+          Total_PrestacionServicios := Total_PrestacionServicios + MemFacturaE.BaseIVA
+        ELSE
+          Total_EntregaBienes := Total_EntregaBienes +  + MemFacturaE.BaseIVA;
+      UNTIL MemFacturaE.NEXT = 0;
+
+      gblTotalAmount1  := ConvDec2Str(AcumBase+AcumCuota2-AcumCuotaReversion, 2);
+      gblCuota         := AcumCuota;
+      gblTotalAmount2  := ConvDec2Str(AcumCuota, 2);
+    END;
+
+    PROCEDURE CogerPeriodoImpositivo@1000000000(Fecha@1000000000 : Date);
+    BEGIN
+      Ejercicio := FORMAT(Fecha, 0, '<Year4>');
+      Periodo := FORMAT(Fecha, 0, '<Month,2>');
+      Es1S2017 := (Fecha < 010717D);
+    END;
+
+    PROCEDURE CogerPeriodoImpositivoAnual@1000000011(Fecha@1000000000 : Date);
+    BEGIN
+      Ejercicio := FORMAT(Fecha, 0, '<Year4>');
+      Periodo := FORMAT(Fecha, 0, '0A');
+    END;
+
+    PROCEDURE ConvDec2Str@1000000004(qDec@1000000000 : Decimal;qNmDec@1000000001 : Integer) : Text[30];
+    VAR
+      rnd@1000000002 : Decimal;
+    BEGIN
+      IF qNmDec = 0 THEN
+        rnd := 1
+      ELSE
+        rnd := 1 / POWER(10 ,qNmDec);
+      qDec := ROUND(qDec, rnd);
+
+      EXIT(CONVERTSTR(FORMAT(qDec, 0, '<Sign><Integer><Decimals,'+FORMAT(qNmDec+1)+'>'), ',', '.'));
+    END;
+
+    PROCEDURE Date2Sii@1000000039(qFecha@1000000000 : Date) : Text[30];
+    BEGIN
+      EXIT(FORMAT(qFecha, 0, '<Day,2>-<Month,2>-<Year4>'));
+    END;
+
+    PROCEDURE Exportacion@1100000(IdExport@1100000 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(NOT ((IdExport = '') OR (UPPERCASE(IdExport) = 'ES')));
+    END;
+
+    PROCEDURE IDType@1100003(IDTipo@1100288000 : Code[10];CodPais@1100000 : Code[10];NoIdent@1000000000 : Boolean) : Code[10];
+    BEGIN
+      // L4 -> Tipos de Identificaci¢n en el pa°s de residencia
+      // 02 NIF-IVA
+      // 03 PASAPORTE
+      // 04 DOCUMENTO OFICIAL DE IDENTIFICACI‡N EXPEDIDO POR EL PAIS O TERRITORIO DE RESIDENCIA
+      // 05 CERTIFICADO DE RESIDENCIA
+      // 06 OTRO DOCUMENTO PROBATORIO
+      // 07 No identificado
+
+      IF IDTipo <> '' THEN
+        EXIT(IDTipo);
+
+      IF NoIdent THEN
+        EXIT('07');
+
+      IF PaisUE(CodPais) THEN
+        EXIT('02')
+      ELSE
+        EXIT('06');
+    END;
+
+    PROCEDURE GetIDTipo@1100288008(IDTipo@1100288000 : Code[10];CodPais@1100000 : Code[10]) : Code[10];
+    BEGIN
+      // L4 -> Tipos de Identificaci¢n en el pa°s de residencia
+      // 02 NIF-IVA
+      // 03 PASAPORTE
+      // 04 DOCUMENTO OFICIAL DE IDENTIFICACI‡N EXPEDIDO POR EL PAIS O TERRITORIO DE RESIDENCIA
+      // 05 CERTIFICADO DE RESIDENCIA
+      // 06 OTRO DOCUMENTO PROBATORIO
+      // 07 No identificado
+
+      IF IDTipo <> '' THEN
+        EXIT(IDTipo);
+
+      IF PaisUE(CodPais) THEN
+        EXIT('02')
+      ELSE
+        EXIT('06');
+    END;
+
+    PROCEDURE PaisUE@1100288009(Codigo@1100288000 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(Codigo IN ['DE','AT','BE','BG','CZ','CY','HR','DK','SK','SI','EE','FI','FR','GR',
+                      'HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','GB','RO','SE']);
+    END;
+
+    PROCEDURE EsTipoRectificativa@1000000066(Parametro@1000000000 : Code[10]) : Boolean;
+    BEGIN
+      EXIT(COPYSTR(Parametro, 1, 1)='R');
+    END;
+
+    PROCEDURE ClaveREoTrans@1100001(pRefDocu@1100000 : RecordRef;CodOperacion@1100288002 : ' ,01,02,03,04,05,06,07,08,09,10,11,12,13,14,15') : Code[10];
+    VAR
+      FactVta@1100001 : Record 112;
+      AboVta@1100002 : Record 114;
+      FactCom@1100288000 : Record 122;
+      AboCom@1100288001 : Record 124;
+    BEGIN
+      EXIT(FORMAT(CodOperacion));
+    END;
+
+    PROCEDURE SujetaNoExenta@1100013(MemFacturaE@1000000000 : TEMPORARY Record 88202) : Boolean;
+    VAR
+      FactVta@1100002 : Record 112;
+      AboVta@1100001 : Record 114;
+    BEGIN
+      EXIT((MemFacturaE."Tipo IVA" = MemFacturaE."Tipo IVA"::Normal) OR
+          (MemFacturaE."Tipo IVA" = MemFacturaE."Tipo IVA"::Reversi¢n) OR
+          (MemFacturaE."Tipo IVA" = MemFacturaE."Tipo IVA"::Total));
+    END;
+
+    PROCEDURE SujetaExenta@1100016(MemFacturaE@1000000000 : TEMPORARY Record 88202) : Boolean;
+    VAR
+      FactVta@1100002 : Record 112;
+      AboVta@1100001 : Record 114;
+    BEGIN
+      EXIT(MemFacturaE."Tipo IVA" = MemFacturaE."Tipo IVA"::Exento);
+    END;
+
+    PROCEDURE NoSujetaLocal@1000000015(MemFacturaE@1100000 : TEMPORARY Record 88202) : Boolean;
+    VAR
+      FactVta@1100002 : Record 112;
+      AboVta@1100001 : Record 114;
+    BEGIN
+      IF MemFacturaE."Tipo No Sujeto" = MemFacturaE."Tipo No Sujeto"::Articulo7_14 THEN
+        EXIT(FALSE)
+      ELSE
+        EXIT((MemFacturaE.TaxTypeCode=CO_IGIC_IPSI) OR
+             (MemFacturaE.TaxTypeCode=CO_EXPORT) OR
+             (MemFacturaE.TaxTypeCode=CO_UE) OR
+             (MemFacturaE."Tipo No Sujeto" = MemFacturaE."Tipo No Sujeto"::ReglasLocalizacion));
+    END;
+
+    PROCEDURE GetCfg@1000000034();
+    VAR
+      qEmpresa@1000000000 : Text[30];
+    BEGIN
+      qEmpresa := GblSII.GetGblEmpresa;
+
+      IF qEmpresa <> '' THEN BEGIN
+        InfEmp.CHANGECOMPANY(qEmpresa);
+        CfgSII.CHANGECOMPANY(qEmpresa);
+      END;
+
+      InfEmp.GET;
+
+      CfgSII.GET;
+    END;
+
+    PROCEDURE Importe2DL@1000000032(Importe@1000000000 : Decimal;Divisa@1000000001 : Code[20];Fecha@1000000002 : Date;Factor@1000000003 : Decimal) : Decimal;
+    VAR
+      TipoCambioDivisa@1000000004 : Record 330;
+    BEGIN
+      IF Divisa <> '' THEN
+        EXIT(TipoCambioDivisa.ExchangeAmtFCYToLCY(Fecha,Divisa,Importe,Factor))
+      ELSE
+        EXIT(Importe);
+    END;
+
+    PROCEDURE ConvertStr40@1100288022(StrIn@1100288000 : Text[1024]) : Text[120];
+    VAR
+      Pos@1100288002 : Integer;
+      StrOut@1000000000 : Text;
+    BEGIN
+      // Convertir & en &amp;
+      StrOut := StrIn;
+      Pos := STRPOS(StrIn, '&');
+      WHILE (Pos > 0) DO BEGIN
+        StrOut := '';
+        WHILE (Pos > 0) DO BEGIN
+          StrOut := StrOut + COPYSTR(StrIn, 1, Pos-1)+'&amp;';
+          StrIn := COPYSTR(StrIn, Pos+1);
+          Pos := STRPOS(StrIn, '&');
+        END;
+        StrOut := StrOut + StrIn;
+      END;
+
+      // Convertir < en &lt;
+      Pos := STRPOS(StrOut, '<');
+      WHILE (Pos > 0) DO BEGIN
+        StrOut := COPYSTR(StrOut, 1, Pos-1)+'&lt;'+COPYSTR(StrOut, Pos+1);
+        Pos := STRPOS(StrOut, '<');
+      END;
+
+      EXIT(COPYSTR(StrOut, 1, 120));
+    END;
+
+    EVENT XMLDoc@1000000028::NodeInserting@94(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT XMLDoc@1000000028::NodeInserted@95(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT XMLDoc@1000000028::NodeRemoving@96(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT XMLDoc@1000000028::NodeRemoved@97(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT XMLDoc@1000000028::NodeChanging@98(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT XMLDoc@1000000028::NodeChanged@99(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

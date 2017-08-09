@@ -1,0 +1,1787 @@
+OBJECT Codeunit 88202 WebService SII
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/07/17;
+    Time=12:29:16;
+    Modified=Yes;
+    Version List=SII;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      FunSII@1000000000 : Codeunit 88201;
+      qEmpresa@1000000001 : Text[30];
+      Text001@1000000009 : TextConst 'ENU=Sin datos para la consulta';
+      Err002@1000000010 : TextConst 'ENU=Certificado con huella digital %1, no encontrado;ESP=Certificado con huella digital %1, no encontrado';
+      Err003@1000000002 : TextConst 'ENU=Certificado';
+      Err004@1000000003 : TextConst 'ENU=El certificado caduc¢ el d°a %1';
+      Err005@1000000004 : TextConst 'ENU=Falta certificado en la configuraci¢n del SII';
+      Err006@1000000008 : TextConst 'ENU=Respuesta';
+      Err007@1000000007 : TextConst 'ENU=Error al coger la respuesta del servicio web';
+      GlbSII@1000000013 : Codeunit 88200;
+      Error2@1000000011 : TextConst 'ENU=ERROR: %1\\%2;ESP=ERROR: %1\\%2';
+      Error3@1000000012 : TextConst 'ENU=ERROR: %1\\DESCRIPTION: %2;ESP=ERROR: %1\\DESCRIPCI‡N: %2';
+      DatosOK@1000000028 : TextConst 'ENU=VAT number OK;ESP=Datos correctos del CIF/NIF';
+      URL_WS7_FE@1000000027 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/fe/SiiFactFEV1SOAP';
+      URL_WS7_FR@1000000026 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/fr/SiiFactFRV1SOAP';
+      URL_WS7_BI@1000000025 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/bi/SiiFactBIV1SOAP';
+      URL_WS7_CE@1000000024 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/fe/SiiFactCOBV1SOAP';
+      URL_WS7_PR@1000000023 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/fr/SiiFactPAGV1SOAP';
+      URL_WS7_OI@1000000022 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/oi/SiiFactOIV1SOAP';
+      URL_WS7_CM@1000000021 : TextConst 'ESP=https://www7.aeat.es/wlpl/SSII-FACT/ws/pm/SiiFactCMV1SOAP';
+      URL_WS1_FE@1000000020 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/fe/SiiFactFEV1SOAP';
+      URL_WS1_FR@1000000019 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/fr/SiiFactFRV1SOAP';
+      URL_WS1_BI@1000000018 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/bi/SiiFactBIV1SOAP';
+      URL_WS1_CE@1000000017 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/fe/SiiFactCOBV1SOAP';
+      URL_WS1_PR@1000000016 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/fr/SiiFactPAGV1SOAP';
+      URL_WS1_OI@1000000015 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/oi/SiiFactOIV1SOAP';
+      URL_WS1_CM@1000000014 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/SSII-FACT/ws/pm/SiiFactCMV1SOAP';
+      URL_WS_CD@1000000005 : TextConst 'ESP=https://www1.agenciatributaria.gob.es/wlpl/BURT-JDIT/ws/VNifV1SOAP';
+      FileMgt@1000000006 : Codeunit 419;
+
+    PROCEDURE SII_Envio@1000000000(FicheroEntrada@1000000037 : Text[1024];SacarMensaje@1000000036 : Boolean;Accion@1000000035 : Text[80];Respuesta@1000000034 : Text[80];TipoEnvio@1000000010 : 'Emitidos,Recibidos,BienesInv,Cobros,Pagos,OpIntra,CobMetalico';TipoAccion@1000000032 : ' ,Consulta,Contraste,Baja';VAR DocSII@1000000031 : Record 88208);
+    VAR
+      Request@1000000000 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest" RUNONCLIENT;
+      Cert@1000000001 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2" RUNONCLIENT;
+      URL@1000000002 : Text[250];
+      XMLDoc@1000000009 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      XMLDoc2@1000000030 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      Store@1000000011 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Store" RUNONCLIENT;
+      StoreName@1000000012 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.StoreName" RUNONCLIENT;
+      StoreLocation@1000000013 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.StoreLocation" RUNONCLIENT;
+      OpenFlag@1000000014 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.OpenFlags" RUNONCLIENT;
+      findResult@1000000016 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2Collection" RUNONCLIENT;
+      X509FindType@1000000017 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509FindType" RUNONCLIENT;
+      encontrados@1000000018 : Integer;
+      CfgSII@1000000025 : Record 88201;
+      FaultCode@1000000026 : Text;
+      FaultString@1000000027 : Text;
+      FileMgt@1000000028 : Codeunit 419;
+    BEGIN
+      IF FileMgt.CanRunDotNetOnClient THEN
+        EnvioOnClient(FicheroEntrada, SacarMensaje, Accion, Respuesta, TipoEnvio, TipoAccion, DocSII)
+      ELSE
+        EnvioOnServer(FicheroEntrada, SacarMensaje, Accion, Respuesta, TipoEnvio, TipoAccion, DocSII);
+    END;
+
+    PROCEDURE EnvioOnClient@1000000037(FicheroEntrada@1000000037 : Text[1024];SacarMensaje@1000000036 : Boolean;Accion@1000000035 : Text[80];Respuesta@1000000034 : Text[80];TipoEnvio@1000000010 : 'Emitidos,Recibidos,BienesInv,Cobros,Pagos,OpIntra,CobMetalico';TipoAccion@1000000032 : ' ,Consulta,Contraste,Baja';VAR DocSII@1000000031 : Record 88208);
+    VAR
+      CfgSII@1000000004 : Record 88201;
+      Request@1000000000 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest" RUNONCLIENT;
+      Cert@1000000001 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2" RUNONCLIENT;
+      URL@1000000002 : Text[250];
+      XMLDoc@1000000009 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      XMLDoc2@1000000030 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      FaultCode@1000000026 : Text;
+      FaultString@1000000027 : Text;
+      ProcesarRespuesta@1000000005 : Boolean;
+      RequestOnServer@1000000007 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest";
+      CertOnServer@1000000006 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2";
+    BEGIN
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN
+        CfgSII.CHANGECOMPANY(qEmpresa);
+
+      CfgSII.GET;
+
+      XMLDoc := XMLDoc.XmlDocument;
+      XMLDoc2 := XMLDoc2.XmlDocument;
+
+      URL := CogerURL(TipoEnvio);
+
+      XMLDoc.Load(FicheroEntrada);
+
+      FunSII.GuardarXMLReq(XMLDoc);
+
+      IF CfgSII.Enabled THEN BEGIN
+        RequestOnServer := RequestOnServer.HttpWebRequest;
+        RequestOnServer := RequestOnServer.Create(URL);
+        RequestOnServer.Method('POST');
+        RequestOnServer.ContentType('text/xml');
+
+        IF CfgSII.LoadCertificateFromBlob(CertOnServer) THEN
+          RequestOnServer.ClientCertificates.Add(CertOnServer)
+        ELSE BEGIN
+          FaultString := Err005;
+          FaultCode   := Err003;
+          InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio, TipoAccion, FaultCode, DocSII);
+          EXIT;
+        END;
+
+        SendRequestOnServer(RequestOnServer, XMLDoc.InnerXml);
+        ProcesarRespuesta := GetResponseOnServer(RequestOnServer, XMLDoc2, FaultCode, FaultString);
+
+      END ELSE BEGIN
+        Request := Request.HttpWebRequest;
+        Request := Request.Create(URL);
+        Request.Method('POST');
+        Request.ContentType('text/xml');
+
+        IF NOT CogerCertificado(Cert, CfgSII, FaultCode, FaultString) THEN BEGIN
+          InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio, TipoAccion, FaultCode, DocSII);
+          EXIT;
+        END;
+
+        Request.ClientCertificates.Add(Cert);
+        SendRequest(Request, XMLDoc.InnerXml);
+        ProcesarRespuesta := GetResponse(Request, XMLDoc2, FaultCode, FaultString);
+      END;
+
+      IF ProcesarRespuesta THEN BEGIN
+      //        FunSII.GuardarXMLRes(XMLDoc2);
+        CASE TipoAccion OF
+          TipoAccion::Contraste:
+            BEGIN
+              IF (TipoEnvio = TipoEnvio::Emitidos) THEN
+                ProcesarContraste(XMLDoc2, Respuesta, 'RegistroRespuestaConsultaLRFacturasEmitidas')
+              ELSE
+                ProcesarContraste(XMLDoc2, Respuesta, 'RegistroRespuestaConsultaLRFacturasRecibidas');
+            END;
+          TipoAccion::Consulta:
+            BEGIN
+              CASE TipoEnvio OF
+                TipoEnvio::Emitidos    : ProcesarConsultaEmitidas(XMLDoc2, Respuesta);
+                TipoEnvio::Recibidos   : ProcesarConsultaRecibidas(XMLDoc2, Respuesta);
+                TipoEnvio::BienesInv   : ProcesarConsultaBienInversion(XMLDoc2, Respuesta);
+                TipoEnvio::Cobros      : ProcesarConsultaCobros(XMLDoc2, Respuesta);
+                TipoEnvio::Pagos       : ProcesarConsultaPagos(XMLDoc2, Respuesta);
+                TipoEnvio::OpIntra     : ProcesarConsultaOpIntra(XMLDoc2, Respuesta);
+                TipoEnvio::CobMetalico : ProcesarConsultaCobMetalico(XMLDoc2, Respuesta);
+              END;
+            END;
+          ELSE
+            InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio,TipoAccion, FaultCode, DocSII)
+        END;
+      END ELSE BEGIN
+        IF SacarMensaje AND (FaultCode <> '') THEN
+          MESSAGE(Error3, FaultCode, FaultString);
+        IF (TipoAccion <> TipoAccion::Consulta) AND (TipoAccion <> TipoAccion::Contraste) THEN
+          InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio, TipoAccion, FaultCode, DocSII);
+      END;
+    END;
+
+    PROCEDURE SendRequest@1000000009(Request@1000000004 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest" RUNONCLIENT;Datos@1000000008 : Text);
+    VAR
+      StreamWriter@1000000003 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.StreamWriter" RUNONCLIENT;
+    BEGIN
+      StreamWriter := StreamWriter.StreamWriter(Request.GetRequestStream);
+      StreamWriter.WriteLine(Datos);
+      StreamWriter.Close;
+    END;
+
+    PROCEDURE GetResponse@1000000005(Request@1000000001 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest" RUNONCLIENT;VAR XMLDocOut@1000000002 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";VAR FaultCode@1000000015 : Text;VAR FaultString@1000000014 : Text) : Boolean;
+    VAR
+      Response@1000000000 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebResponse" RUNONCLIENT;
+      ResponseStream@1000000008 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.Stream" RUNONCLIENT;
+      HttpWebStatus@1000000016 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpStatusCode";
+      XMLDocIn@1000000003 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      FileStream@1000000011 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileStream" RUNONCLIENT;
+      FileMode@1000000010 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileMode" RUNONCLIENT;
+      FileAccess@1000000009 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileAccess" RUNONCLIENT;
+      Buffer@1000000004 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array" RUNONCLIENT;
+      FileName@1000000007 : Text;
+      FileName2@1000000006 : Text;
+      FileMgt@1000000005 : Codeunit 419;
+      readBytes@1000000012 : Integer;
+      XMLNode@1000000013 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      ASSERTERROR BEGIN
+        Response := Request.GetResponse();
+        IF HttpWebStatus.Equals(Response.StatusCode,HttpWebStatus.OK) THEN BEGIN
+      //    ResponseStream := Request.GetResponse().GetResponseStream();
+          ResponseStream := Response.GetResponseStream();
+          ERROR('OK');
+        END ELSE BEGIN
+          HttpWebStatus := Response.StatusCode;
+          ERROR(Response.StatusDescription);
+        END;
+      END;
+      IF GETLASTERRORTEXT = 'OK' THEN BEGIN
+        IF NOT ISNULL(ResponseStream) THEN BEGIN
+          CreateArrayBytes(Buffer, 2048);
+          FileName := FileMgt.ClientTempFileName('');
+          FileStream := FileStream.FileStream(FileName, FileMode.Create, FileAccess.Write);
+          readBytes := ResponseStream.Read(Buffer, 0, Buffer.Length);
+          WHILE readBytes > 0 DO BEGIN
+            FileStream.Write(Buffer, 0, readBytes);
+            readBytes := ResponseStream.Read(Buffer, 0, Buffer.Length);
+          END;
+          FileStream.Close();
+          FileName2 := FileMgt.UploadFileSilent(FileName);
+          XMLDocIn := XMLDocIn.XmlDocument;
+          XMLDocIn.Load(FileName2);
+          XMLDocOut := XMLDocIn;
+          FunSII.RemoveNamespace(XMLDocIn, XMLDocIn);
+          IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault',XMLNode) THEN BEGIN // Error
+            IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault/faultcode',XMLNode) THEN
+              FaultCode := COPYSTR(XMLNode.InnerText,1,1024);
+            IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault/faultstring',XMLNode) THEN
+              FaultString := COPYSTR(XMLNode.InnerText,1,1024);
+            EXIT(FALSE);
+          END;
+          EXIT(TRUE);
+        END;
+
+        EXIT(FALSE);
+      END ELSE BEGIN
+        FaultCode := '-1'; // HttpWebStatus.ToString();
+        FaultString := GETLASTERRORTEXT;
+        CLEARLASTERROR;
+        EXIT(FALSE);
+      END;
+    END;
+
+    PROCEDURE EnvioOnServer@1000000038(FicheroEntrada@1000000037 : Text[1024];SacarMensaje@1000000036 : Boolean;Accion@1000000035 : Text[80];Respuesta@1000000034 : Text[80];TipoEnvio@1000000010 : 'Emitidos,Recibidos,BienesInv,Cobros,Pagos,OpIntra,CobMetalico';TipoAccion@1000000032 : ' ,Consulta,Contraste,Baja';VAR DocSII@1000000031 : Record 88208);
+    VAR
+      Request@1000000000 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest";
+      Cert@1000000001 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2";
+      URL@1000000002 : Text[250];
+      XMLDoc@1000000009 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      XMLDoc2@1000000030 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      CfgSII@1000000025 : Record 88201;
+      FaultCode@1000000026 : Text;
+      FaultString@1000000027 : Text;
+    BEGIN
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN
+        CfgSII.CHANGECOMPANY(qEmpresa);
+
+      CfgSII.GET;
+
+      XMLDoc := XMLDoc.XmlDocument;
+      XMLDoc2 := XMLDoc2.XmlDocument;
+
+      URL := CogerURL(TipoEnvio);
+
+      XMLDoc.Load(FicheroEntrada);
+
+      Request := Request.HttpWebRequest;
+      Request := Request.Create(URL);
+      Request.Method('POST');
+      Request.ContentType('text/xml');
+
+      IF CfgSII.LoadCertificateFromBlob(Cert) THEN
+        Request.ClientCertificates.Add(Cert)
+      ELSE BEGIN
+        FaultString := Err005;
+        FaultCode   := Err003;
+        InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio, TipoAccion, FaultCode, DocSII);
+        EXIT;
+      END;
+
+      SendRequestOnServer(Request, XMLDoc.InnerXml);
+
+      //obtener la respuesta
+      IF GetResponseOnServer(Request, XMLDoc2, FaultCode, FaultString) THEN BEGIN
+        CASE TipoAccion OF
+          TipoAccion::Contraste:
+            BEGIN
+              IF (TipoEnvio = TipoEnvio::Emitidos) THEN
+                ProcesarContraste(XMLDoc2, Respuesta, 'RegistroRespuestaConsultaLRFacturasEmitidas')
+              ELSE
+                ProcesarContraste(XMLDoc2, Respuesta, 'RegistroRespuestaConsultaLRFacturasRecibidas');
+            END;
+          TipoAccion::Consulta:
+            BEGIN
+              CASE TipoEnvio OF
+                TipoEnvio::Emitidos    : ProcesarConsultaEmitidas(XMLDoc2, Respuesta);
+                TipoEnvio::Recibidos   : ProcesarConsultaRecibidas(XMLDoc2, Respuesta);
+                TipoEnvio::BienesInv   : ProcesarConsultaBienInversion(XMLDoc2, Respuesta);
+                TipoEnvio::Cobros      : ProcesarConsultaCobros(XMLDoc2, Respuesta);
+                TipoEnvio::Pagos       : ProcesarConsultaPagos(XMLDoc2, Respuesta);
+                TipoEnvio::OpIntra     : ProcesarConsultaOpIntra(XMLDoc2, Respuesta);
+                TipoEnvio::CobMetalico : ProcesarConsultaCobMetalico(XMLDoc2, Respuesta);
+              END;
+            END;
+          ELSE
+            InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio,TipoAccion, FaultCode, DocSII)
+        END;
+      END ELSE BEGIN
+        IF SacarMensaje AND (FaultCode <> '') THEN
+          MESSAGE(Error3, FaultCode, FaultString);
+        IF (TipoAccion <> TipoAccion::Consulta) AND (TipoAccion <> TipoAccion::Contraste) THEN
+          InsEnvio(XMLDoc, XMLDoc2, Respuesta, FaultString, TipoEnvio, TipoAccion, FaultCode, DocSII);
+      END;
+    END;
+
+    PROCEDURE SendRequestOnServer@1000000033(Request@1000000004 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest";Datos@1000000008 : Text);
+    VAR
+      StreamWriter@1000000003 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.StreamWriter";
+    BEGIN
+      StreamWriter := StreamWriter.StreamWriter(Request.GetRequestStream);
+      StreamWriter.WriteLine(Datos);
+      StreamWriter.Close;
+    END;
+
+    PROCEDURE GetResponseOnServer@1000000034(Request@1000000001 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest";VAR XMLDocOut@1000000002 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";VAR FaultCode@1000000015 : Text;VAR FaultString@1000000014 : Text) : Boolean;
+    VAR
+      Response@1000000000 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebResponse";
+      ResponseStream@1000000008 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.Stream";
+      HttpWebStatus@1000000016 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpStatusCode";
+      XMLDocIn@1000000003 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      FileStream@1000000011 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileStream";
+      FileMode@1000000010 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileMode";
+      FileAccess@1000000009 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.FileAccess";
+      Buffer@1000000004 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      FileName@1000000007 : Text;
+      FileMgt@1000000005 : Codeunit 419;
+      readBytes@1000000012 : Integer;
+      XMLNode@1000000013 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      ASSERTERROR BEGIN
+        Response := Request.GetResponse();
+        IF HttpWebStatus.Equals(Response.StatusCode,HttpWebStatus.OK) THEN BEGIN
+      //    ResponseStream := Request.GetResponse().GetResponseStream();
+          ResponseStream := Response.GetResponseStream();
+          ERROR('OK');
+        END ELSE BEGIN
+          HttpWebStatus := Response.StatusCode;
+          ERROR(Response.StatusDescription);
+        END;
+      END;
+      IF GETLASTERRORTEXT = 'OK' THEN BEGIN
+        IF NOT ISNULL(ResponseStream) THEN BEGIN
+          CreateArrayBytes(Buffer, 2048);
+          FileName := FileMgt.ServerTempFileName('');
+          FileStream := FileStream.FileStream(FileName, FileMode.Create, FileAccess.Write);
+          readBytes := ResponseStream.Read(Buffer, 0, Buffer.Length);
+          WHILE readBytes > 0 DO BEGIN
+            FileStream.Write(Buffer, 0, readBytes);
+            readBytes := ResponseStream.Read(Buffer, 0, Buffer.Length);
+          END;
+          FileStream.Close();
+          XMLDocIn := XMLDocIn.XmlDocument;
+          XMLDocIn.Load(FileName);
+          XMLDocOut := XMLDocIn;
+          FunSII.RemoveNamespace(XMLDocIn, XMLDocIn);
+          IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault',XMLNode) THEN BEGIN // Error
+            IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault/faultcode',XMLNode) THEN
+              FaultCode := COPYSTR(XMLNode.InnerText,1,1024);
+            IF FunSII.FindNode(XMLDocIn,'//Envelope/Body/Fault/faultstring',XMLNode) THEN
+              FaultString := COPYSTR(XMLNode.InnerText,1,1024);
+            EXIT(FALSE);
+          END;
+          EXIT(TRUE);
+        END;
+
+        EXIT(FALSE);
+      END ELSE BEGIN
+        FaultCode := '-1'; // HttpWebStatus.ToString();
+        FaultString := GETLASTERRORTEXT;
+        CLEARLASTERROR;
+        EXIT(FALSE);
+      END;
+    END;
+
+    PROCEDURE CalidadDatos@1000000017(NIF@1000000000 : Code[20];RazonSocial@1000000001 : Text[140];Silent@1000000002 : Boolean) : Boolean;
+    VAR
+      Request@1000000023 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest" RUNONCLIENT;
+      Response@1000000022 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebResponse" RUNONCLIENT;
+      Cert@1000000024 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2" RUNONCLIENT;
+      URL@1000000020 : Text[250];
+      XMLDoc@1000000014 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      CfgSII@1000000006 : Record 88201;
+      FaultCode@1000000005 : Text;
+      FaultString@1000000004 : Text;
+      XMLReq@1000000007 : Text;
+      ret@1000000025 : Boolean;
+      ProcesarRespuesta@1000000010 : Boolean;
+      RequestOnServer@1000000009 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Net.HttpWebRequest";
+      CertOnServer@1000000008 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2";
+    BEGIN
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN
+        CfgSII.CHANGECOMPANY(qEmpresa);
+
+      CfgSII.GET;
+
+      XMLDoc := XMLDoc.XmlDocument;
+
+      XMLReq := STRSUBSTNO('<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" '+
+         'xmlns:vnif="http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/'+
+         'aplicaciones/es/aeat/burt/jdit/ws/VNifV1Ent.xsd">'+
+         '<soapenv:Header/>'+
+         '<soapenv:Body>'+
+         '<vnif:VNifV1Ent>'+
+         '<vnif:Nif>%1</vnif:Nif>'+
+         '<vnif:Nombre>%2</vnif:Nombre>'+
+         '</vnif:VNifV1Ent>'+
+         '</soapenv:Body>'+
+         '</soapenv:Envelope>', NIF, RazonSocial);
+
+      XMLDoc.InnerXml(XMLReq);
+
+      IF NOT Silent THEN
+        FunSII.GuardarXMLReq(XMLDoc);
+
+      URL := URL_WS_CD;
+
+      IF CfgSII.Enabled THEN BEGIN
+        RequestOnServer := RequestOnServer.HttpWebRequest;
+        RequestOnServer := RequestOnServer.Create(URL);
+        RequestOnServer.Method('POST');
+        RequestOnServer.ContentType('text/xml');
+
+        IF CfgSII.LoadCertificateFromBlob(CertOnServer) THEN
+          RequestOnServer.ClientCertificates.Add(CertOnServer)
+        ELSE BEGIN
+          FaultString := Err005;
+          FaultCode   := Err003;
+          ERROR(Error2, FaultCode, FaultString);
+        END;
+
+        SendRequestOnServer(RequestOnServer, XMLDoc.InnerXml);
+        ProcesarRespuesta := GetResponseOnServer(RequestOnServer, XMLDoc, FaultCode, FaultString);
+
+      END ELSE BEGIN
+        Request := Request.HttpWebRequest;
+        Request := Request.Create(URL);
+        Request.Method('POST');
+        Request.ContentType('text/xml');
+
+        IF NOT CogerCertificado(Cert, CfgSII, FaultCode, FaultString) THEN BEGIN
+           ERROR(Error2, FaultCode, FaultString);
+        END;
+
+        Request.ClientCertificates.Add(Cert);
+        SendRequest(Request, XMLDoc.InnerXml);
+        ProcesarRespuesta := GetResponse(Request, XMLDoc, FaultCode, FaultString);
+      END;
+
+      //obtener la respuesta
+      IF ProcesarRespuesta THEN BEGIN
+        IF NOT Silent THEN
+          FunSII.GuardarXMLRes(XMLDoc);
+        IF GUIALLOWED AND NOT Silent THEN
+          MESSAGE(DatosOK);
+        ret := TRUE;
+      END ELSE BEGIN
+        IF GUIALLOWED AND NOT Silent THEN
+          MESSAGE(Error3, FaultCode, FaultString);
+      END;
+
+      EXIT(ret);
+    END;
+
+    PROCEDURE ShowXML@1000000010(XMLDoc@1000000000 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument");
+    VAR
+      FileName@1000000003 : Text;
+      FileName2@1000000002 : Text;
+      FileMgt@1000000001 : Codeunit 419;
+    BEGIN
+      FileName := FileMgt.ServerTempFileName('');
+      XMLDoc.Save(FileName);
+      FileName2 := FileMgt.ClientTempFileName('XML');
+      FileMgt.DownloadToFile(FileName, FileName2);
+      HYPERLINK(FileName2);
+    END;
+
+    LOCAL PROCEDURE CogerNombreFicheroURL@1000000008(URLFichero@1000000000 : Text) : Text;
+    VAR
+      Nombre@1000000001 : Text;
+      Pos@1000000002 : Integer;
+    BEGIN
+      Nombre := URLFichero;
+      Pos := STRPOS(Nombre, '/');
+      WHILE (Pos > 0) DO BEGIN
+        Nombre := COPYSTR(Nombre, Pos+1);
+        Pos := STRPOS(Nombre, '/');
+      END;
+      EXIT(Nombre);
+    END;
+
+    LOCAL PROCEDURE QuitarSlashFinal@1000000003(URL@1000000000 : Text;Slash@1000000001 : Text[1]) : Text;
+    BEGIN
+      IF COPYSTR(URL, STRLEN(URL), 1) = Slash THEN
+        URL := COPYSTR(URL, 1, STRLEN(URL)-1);
+      EXIT(URL);
+    END;
+
+    LOCAL PROCEDURE Stream2Stream@1000000006(InputStream@1000000000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.Stream";VAR OutputStream@1000000001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.Stream");
+    VAR
+      Buffer@1000000003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      NETType@1000000002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Type";
+      Leidos@1000000004 : Integer;
+      Writer@1000000005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.StreamWriter";
+    BEGIN
+      NETType := NETType.GetType('System.Byte', FALSE);
+      Buffer := Buffer.CreateInstance(NETType, 32768);
+      Writer := Writer.StreamWriter(OutputStream);
+      Leidos := InputStream.Read(Buffer, 0, Buffer.Length);
+      WHILE (Leidos > 0) DO BEGIN
+        Writer.Write(Buffer, 0, Leidos);
+        Leidos := InputStream.Read(Buffer, 0, Buffer.Length);
+      END;
+    END;
+
+    LOCAL PROCEDURE CreateArrayBytes@1000000016(VAR Buffer@1000000001 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";LengthBuffer@1000000002 : Integer);
+    VAR
+      NetType@1000000000 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Type";
+    BEGIN
+      NetType := NetType.GetType('System.Byte', FALSE);
+      Buffer := Buffer.CreateInstance(NetType, LengthBuffer);
+    END;
+
+    LOCAL PROCEDURE CreateArrayChars@1000000007(VAR Buffer@1000000001 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";LengthBuffer@1000000002 : Integer);
+    VAR
+      NetType@1000000000 : DotNet "'mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Type";
+    BEGIN
+      NetType := NetType.GetType('System.Char', FALSE);
+      Buffer := Buffer.CreateInstance(NetType, LengthBuffer);
+    END;
+
+    PROCEDURE InsEnvio@1000000013(XMLDoc@1000000000 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";XMLDoc2@1000000017 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000004 : Text[80];FaultString@1000000005 : Text;TipoEnvio@1000000003 : 'Emitidos,Recibidos,BienesInv,Pagos,Cobros,OpIntra,CobMetalico';TipoAccion@1000000001 : ' ,Consulta,Contraste,Baja';FaultError@1000000006 : Text[30];VAR DocSII@1000000002 : Record 88208);
+    VAR
+      FileMgt@1000000008 : Codeunit 419;
+      recEnvios@1000000009 : Record 88204;
+      recEnvios2@1000000025 : Record 88204;
+      GuardarXMLEnvio@1000000011 : Boolean;
+      GuardarXMLRespuesta@1000000018 : Boolean;
+      CfgSII@1000000012 : Record 88201;
+      NMov@1000000013 : Integer;
+      Fichero@1000000014 : Text;
+      tmpBlob@1000000015 : Record 99008535;
+      GuardarXMLEnvioFich@1000000020 : Boolean;
+      GuardarXMLRespuestaFich@1000000019 : Boolean;
+      Agrupado@1000000016 : Boolean;
+      NMovAgrupado@1000000007 : Integer;
+      recDocus@1000000010 : Record 88208;
+      qFecha@1000000021 : Date;
+      XMLNode@1000000024 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000023 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000022 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      i@1000000026 : Integer;
+    BEGIN
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN BEGIN
+        CfgSII.CHANGECOMPANY(qEmpresa);
+        recEnvios.CHANGECOMPANY(qEmpresa);
+        DocSII.CHANGECOMPANY(qEmpresa);
+      END;
+
+      Agrupado := DocSII.COUNT > 1;
+
+      IF recEnvios.FINDLAST THEN
+        NMov := recEnvios."No. mov."
+      ELSE
+        NMov := 0;
+      NMov := NMov + 1;
+      recEnvios.INIT;
+      recEnvios."No. mov."                 := NMov;
+      recEnvios."Tipo envio"               :=  GetTipoEnvio(TipoEnvio, TipoAccion);
+      recEnvios.Usuario                    := USERID;
+      recEnvios."NMov DocSII"              := DocSII.NMov;
+
+      IF Agrupado THEN
+        NMovAgrupado := recEnvios."No. mov.";
+
+      GuardarXMLEnvio := TRUE;
+      GuardarXMLRespuesta := TRUE;
+
+      GuardarXMLEnvioFich := TRUE;
+      GuardarXMLRespuestaFich := TRUE;
+
+      IF CfgSII.GET THEN BEGIN
+        GuardarXMLEnvio := NOT CfgSII."No guardar XML envio";
+        GuardarXMLRespuesta := NOT CfgSII."No guardar XML respuesta";
+
+        GuardarXMLEnvioFich := CfgSII."Guardar XML en ficheros" AND (CfgSII."Ruta XML envio" <> '');
+        GuardarXMLRespuestaFich :=CfgSII."Guardar XML en ficheros" AND (CfgSII."Ruta XML respuesta" <> '');
+      END;
+
+      IF GuardarXMLRespuesta THEN BEGIN
+        Fichero := FileMgt.ServerTempFileName('XML');
+        XMLDoc2.Save(Fichero);
+        FileMgt.BLOBImportFromServerFile(tmpBlob, Fichero);
+        recEnvios."XML respuesta" := tmpBlob.Blob;
+      END;
+
+      IF GuardarXMLEnvio THEN BEGIN
+        Fichero := FileMgt.ServerTempFileName('XML');
+        XMLDoc.Save(Fichero);
+        FileMgt.BLOBImportFromServerFile(tmpBlob, Fichero);
+        recEnvios."XML envio" := tmpBlob.Blob;
+      END;
+
+      FunSII.RemoveNamespace(XMLDoc2, XMLDoc2);
+
+      IF FaultString = '' THEN BEGIN
+        recEnvios."Estado env°o"             := GetEstado(XMLDoc2, Respuesta);
+        recEnvios."Timestamp presentaci¢n"   := GetTime(XMLDoc2, Respuesta);
+        recEnvios."Tipo comunicaci¢n"        := GetTipoCom(XMLDoc2, Respuesta);
+        recEnvios.CSV                        := GetCSV(XMLDoc2, Respuesta);
+        recEnvios."Codigo Error"             := GetError(XMLDoc2, Respuesta);
+        recEnvios."Descripcion Error"        := GetDescError(XMLDoc2, Respuesta);
+      END ELSE BEGIN
+        recEnvios."Estado env°o"             := 'Error';
+        recEnvios."Timestamp presentaci¢n"   := CURRENTDATETIME;
+        recEnvios."Tipo comunicaci¢n"        := '';
+        recEnvios.CSV                        := '';
+        recEnvios."Codigo Error"             := FaultError;
+        recEnvios."Descripcion Error"        := COPYSTR(FaultString, 1, MAXSTRLEN(recEnvios."Descripcion Error"));
+      END;
+
+      recEnvios.INSERT;
+
+      ModDocSII(DocSII.NMov, recEnvios);
+
+      IF Agrupado THEN BEGIN
+        // Debemos desglosar el XML con las respuestas recibidas.
+        XMLNodeList := XMLDoc2.GetElementsByTagName('RespuestaLinea');
+        i := 0;
+        XMLNode := XMLNodeList.Item(i);
+        WHILE NOT ISNULL(XMLNode) DO BEGIN
+          // Obtenemos Documento, Fecha, NIF, para buscar el DocSII y actualizarlo
+          BuscarDatosID(XMLNode, recEnvios2);
+          IF recDocus.GET(recEnvios2."NMov DocSII") THEN BEGIN
+            IF recEnvios2."NMov DocSII" = DocSII.NMov THEN BEGIN
+              IF recEnvios2.GET(NMovAgrupado) THEN BEGIN
+                IF recEnvios2.GET(NMovAgrupado) THEN BEGIN
+                  recEnvios2."Estado env°o"           := GetEstado2(XMLNode);
+                  recEnvios2."Codigo Error"           := GetError2(XMLNode);
+                  recEnvios2."Descripcion Error"      := GetDescError2(XMLNode);
+                  recEnvios2.MODIFY;
+                END;
+              END;
+            END ELSE BEGIN
+              recEnvios2."Estado env°o"           := GetEstado2(XMLNode);
+              recEnvios2."Codigo Error"           := GetError2(XMLNode);
+              recEnvios2."Descripcion Error"      := GetDescError2(XMLNode);
+              recEnvios2.CSV                      := GetCSV2(XMLNode);
+              IF recEnvios2.CSV = '' THEN
+                recEnvios2.CSV                    := recEnvios.CSV;
+              recEnvios2."Timestamp presentaci¢n" := recEnvios."Timestamp presentaci¢n";
+              recEnvios2."Tipo comunicaci¢n"      := recEnvios."Tipo comunicaci¢n";
+              recEnvios2."Tipo envio"             := recEnvios."Tipo envio";
+              recEnvios2.Usuario                  := recEnvios.Usuario;
+              NMov := NMov + 1;
+              recEnvios2."No. mov."               := NMov;
+              recEnvios2."NMov agrupacion"        := NMovAgrupado;
+              recEnvios2.INSERT;
+            END;
+            ModDocSII(recDocus.NMov, recEnvios2);
+          END;
+          i := i + 1;
+          XMLNode := XMLNodeList.Item(i);
+        END;
+      END;
+
+      COMMIT;
+    END;
+
+    PROCEDURE BuscarDatosID@1000000031(XMLNode@1000000006 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";VAR recEnvios@1000000004 : Record 88204);
+    VAR
+      XMLNode2@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      qFecha@1000000002 : Date;
+      NIF@1000000001 : Code[20];
+      recDocus@1000000005 : Record 88208;
+    BEGIN
+      CLEAR(recDocus);
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN BEGIN
+        recDocus.CHANGECOMPANY(qEmpresa);
+      END;
+
+      XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NIF');
+      IF NOT ISNULL(XMLNode2) THEN
+        NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(NIF));
+      XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+      IF NOT ISNULL(XMLNode2) THEN
+        recEnvios.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(recEnvios.Documento));
+      XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisorResumenFin');
+      IF NOT ISNULL(XMLNode2) THEN
+        recEnvios.DocumentoFin := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(recEnvios.DocumentoFin));
+      XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+      IF NOT ISNULL(XMLNode2) THEN BEGIN
+        IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+          recEnvios.Fecha := qFecha;
+      END;
+
+      IF NIF = FunSII.GetCompanyVATNo THEN BEGIN
+        IF recEnvios.DocumentoFin = '' THEN BEGIN
+          recDocus.SETCURRENTKEY(Documento, Fecha);
+          recDocus.SETRANGE(Documento,recEnvios.Documento);
+        END ELSE BEGIN
+          recDocus.SETCURRENTKEY(Fecha, "Factura resumen inicio", "Factura resumen fin");
+          recDocus.SETRANGE("Factura resumen inicio",recEnvios.Documento);
+          recDocus.SETRANGE("Factura resumen fin",recEnvios.DocumentoFin);
+        END;
+        recDocus.SETRANGE(Fecha,recEnvios.Fecha);
+      END ELSE BEGIN
+        recDocus.SETCURRENTKEY(DocumentoTercero, "Fecha documento");
+        recDocus.SETRANGE(DocumentoTercero, recEnvios.Documento);
+        recDocus.SETRANGE("Fecha documento",recEnvios.Fecha);
+      END;
+
+      IF recDocus.FIND('-') THEN
+        recEnvios."NMov DocSII" := recDocus.NMov
+      ELSE
+        recEnvios."NMov DocSII" := 0;
+    END;
+
+    PROCEDURE ModDocSII@1000000030(NMov@1000000000 : Integer;recEnvios@1000000001 : Record 88204);
+    VAR
+      recDocus@1000000002 : Record 88208;
+    BEGIN
+      qEmpresa := GlbSII.GetGblEmpresa;
+      IF qEmpresa <> '' THEN BEGIN
+        recDocus.CHANGECOMPANY(qEmpresa);
+      END;
+
+      recDocus.GET(NMov);
+      recDocus."Estado env°o"           := FunSII.CogerEstado(recEnvios."Estado env°o");
+      recDocus."Timestamp presentaci¢n" := recEnvios."Timestamp presentaci¢n";
+      recDocus."Tipo comunicaci¢n"      := recEnvios."Tipo comunicaci¢n";
+      recDocus.CSV                      := recEnvios.CSV;
+      recDocus."Codigo Error"           := recEnvios."Codigo Error";
+      recDocus."Descripcion Error"      := recEnvios."Descripcion Error";
+      recDocus."Tipo envio"             := recEnvios."Tipo envio";
+      recDocus.MODIFY;
+    END;
+
+    PROCEDURE GetEstado@1000000001(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : Text[30];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/RespuestaLinea/EstadoRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,30));
+    END;
+
+    PROCEDURE GetTime@1000000002(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : DateTime;
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      DT@1000000003 : DateTime;
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/DatosPresentacion/TimestampPresentacion',XMLNode) THEN BEGIN
+        IF EVALUATE(DT, XMLNode.InnerText) THEN
+          EXIT(DT);
+      END;
+      EXIT(CURRENTDATETIME);
+    END;
+
+    PROCEDURE GetCSV@1000000015(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : Text[80];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/CSV',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,80));
+    END;
+
+    PROCEDURE GetTipoCom@1000000011(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : Text[10];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/TipoComunicacion',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,10));
+    END;
+
+    PROCEDURE GetError@1000000012(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : Text[30];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/RespuestaLinea/CodigoErrorRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,30));
+    END;
+
+    PROCEDURE GetDescError@1000000014(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]) : Text[250];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/RespuestaLinea/DescripcionErrorRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,250));
+    END;
+
+    PROCEDURE GetEstado2@1000000029(paramXMLNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Text[30];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(paramXMLNode,'EstadoRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,30));
+    END;
+
+    PROCEDURE GetError2@1000000028(paramXMLNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Text[30];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(paramXMLNode,'CodigoErrorRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,30));
+    END;
+
+    PROCEDURE GetDescError2@1000000027(paramXMLNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Text[250];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(paramXMLNode,'DescripcionErrorRegistro',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,250));
+    END;
+
+    PROCEDURE GetCSV2@1000000026(paramXMLNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Text[80];
+    VAR
+      XMLNode@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+    BEGIN
+      IF FunSII.FindNode(paramXMLNode,'CSV',XMLNode) THEN
+        EXIT(COPYSTR(XMLNode.InnerText,1,80));
+    END;
+
+    PROCEDURE GetTipoEnvio@1000000025(TipoEnvio@1000000003 : 'Emitidos,Recibidos,BienesInv,Pagos,Cobros,OpIntra,CobMetalico';TipoAccion@1000000002 : ' ,Consulta,Contraste,Baja') : Integer;
+    BEGIN
+      CASE TipoEnvio OF
+        TipoEnvio::Emitidos    :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+        TipoEnvio::Recibidos   :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+        TipoEnvio::BienesInv   :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(4)
+            ELSE
+              EXIT(3);
+          END;
+        TipoEnvio::OpIntra     :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+        TipoEnvio::Cobros      :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+        TipoEnvio::Pagos       :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+        TipoEnvio::CobMetalico :
+          BEGIN
+            IF TipoAccion = TipoAccion::Baja THEN
+              EXIT(2)
+            ELSE
+              EXIT(1);
+          END;
+      END;
+    END;
+
+    PROCEDURE ProcesarConsultaEmitidas@1000000019(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000002 : TEMPORARY Record 88206;
+      Resultado@1000000003 : Text;
+      qTexto@1000000004 : Text;
+      qVal@1000000005 : Decimal;
+      qDT@1000000006 : DateTime;
+      qFecha@1000000007 : Date;
+      i@1000000011 : Integer;
+      XMLNode@1000000010 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000008 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      qInt@1000000012 : Integer;
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      FunSII.GuardarXMLRes(XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::E;
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de las facturas
+      qTexto := 'RegistroRespuestaConsultaLRFacturasEmitidas';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Documento));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/TipoFactura');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Tipo factura" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Tipo factura"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/FacturasRectificadas/IDFacturaRectificada/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Factura rectificada" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Factura rectificada"))
+        ELSE
+          regConsul."Factura rectificada" := '';
+
+        regConsul."Fecha factura rectificada" := 0D;
+        XMLNode2 :=XMLNode.SelectSingleNode('DatosFacturaEmitida/FacturasRectificadas/IDFacturaRectificada/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul."Fecha factura rectificada" := qFecha;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/ClaveRegimenEspecialOTrascendencia');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Clave := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Clave));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/ImporteTotal');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Importe / Cuota" := FunSII.Texto2Num(XMLNode2.InnerText);
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/DescripcionOperacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Descripcion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Descripcion));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/EmitidaPorTerceros');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Emitida por terceros" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Emitida por terceros"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/Contraparte/NombreRazon');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Nombre Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Nombre Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/Contraparte/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"))
+        ELSE
+          regConsul."NIF Contraparte" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaEmitida/Contraparte/IDOtro/ID');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qInt, XMLNode2.InnerText) THEN
+            regConsul."Estado cuadre" := qInt;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampEstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampUltimaModificacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoRegistro');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Estado registro" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Estado registro"));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaRecibidas@1000000020(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      qInt@1000000012 : Integer;
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de las facturas
+      qTexto := 'RegistroRespuestaConsultaLRFacturasRecibidas';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Documento));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/TipoFactura');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Tipo factura" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Tipo factura"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/ClaveRegimenEspecialOTrascendencia');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Clave := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Clave));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/DescripcionOperacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Descripcion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Descripcion));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/Contraparte/NombreRazon');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Nombre Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Nombre Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/Contraparte/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"))
+        ELSE
+          regConsul."NIF Contraparte" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/Contraparte/IDOtro/ID');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/CuotaDeducible');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Importe / Cuota" := FunSII.Texto2Num(XMLNode2.InnerText);
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosFacturaRecibida/FechaRegContable');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qInt, XMLNode2.InnerText) THEN
+            regConsul."Estado cuadre" := qInt;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampEstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampUltimaModificacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoRegistro');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Estado registro" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Estado registro"));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaBienInversion@1000000021(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de los bienes de inversion
+      qTexto := 'RegistroRespuestaConsultaLRBienesInversion';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Documento));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NombreRazon');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Nombre Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Nombre Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosBienInversion/IdentificacionBien');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Identificacion Bien" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Identificacion Bien"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosBienInversion/FechaInicioUtilizacion');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul."Fecha Inicio Utilizacion" := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosBienInversion/ProrrataAnualDefinitiva');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qVal, CONVERTSTR(XMLNode2.InnerText, '.', ',')) THEN
+            regConsul."Prorrata anual definitiva" := qVal;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampUltimaModificacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoRegistro');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Estado registro" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Estado registro"));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaCobros@1000000022(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de los bienes de inversion
+      qTexto := 'RegistroRespuestaConsultaCobros';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Fecha');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul."Fecha pago" := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Importe');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qVal, XMLNode2.InnerText) THEN
+            regConsul."Importe pago" := qVal;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Medio');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Medio pago" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Medio pago"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/CSV');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.CSV := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.CSV));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaPagos@1000000023(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos del pago
+      qTexto := 'RegistroRespuestaConsultaPagos';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Fecha');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul."Fecha pago" := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Importe');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qVal, XMLNode2.InnerText) THEN
+            regConsul."Importe pago" := qVal;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPago/Medio');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Medio pago" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Medio pago"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/CSV');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.CSV := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.CSV));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaOpIntra@1000000018(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de los bienes de inversion
+      qTexto := 'RegistroRespuestaConsultaLRDetOperIntracomunitarias';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Documento));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosDetOperIntracomunitarias/Contraparte/NombreRazon');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Nombre Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Nombre Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosDetOperIntracomunitarias/Contraparte/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosDetOperIntracomunitarias/Contraparte/TipoOperacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Tipo factura" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Tipo factura"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampUltimaModificacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoRegistro');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Estado registro" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Estado registro"));
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarConsultaCobMetalico@1000000024(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80]);
+    VAR
+      regConsul@1000000011 : TEMPORARY Record 88206;
+      Resultado@1000000010 : Text;
+      qTexto@1000000009 : Text;
+      qVal@1000000008 : Decimal;
+      qDT@1000000007 : DateTime;
+      qFecha@1000000006 : Date;
+      i@1000000005 : Integer;
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000003 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000002 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      regConsul.DELETEALL;
+      regConsul."No. mov." := 0;
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      regConsul.Tipo := regConsul.Tipo::"2";
+      // Coger datos cabecera
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/Cabecera/Titular/NIF',XMLNode2) THEN
+        regConsul.NIF := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.NIF));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Ejercicio',XMLNode2) THEN
+        regConsul.Ejercicio := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Ejercicio));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/PeriodoImpositivo/Periodo',XMLNode2) THEN
+        regConsul.Periodo := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Periodo));
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/IndicadorPaginacion',XMLNode2) THEN
+        regConsul.Paginacion := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Paginacion));
+
+      // Coger los datos de los bienes de inversion
+      qTexto := 'RegistroRespuestaConsultaLRCobrosMetalico';
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/NIFPresentador');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Emisor/Presentador" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Emisor/Presentador"))
+        ELSE
+          regConsul."NIF Emisor/Presentador" := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/NumSerieFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.Documento := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.Documento));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NombreRazon');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."Nombre Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."Nombre Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/IDEmisorFactura/NIF');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul."NIF Contraparte" := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul."NIF Contraparte"));
+
+        XMLNode2 := XMLNode.SelectSingleNode('IDFactura/FechaExpedicionFacturaEmisor');
+        IF NOT ISNULL(XMLNode2) THEN BEGIN
+          IF EVALUATE(qFecha, XMLNode2.InnerText) THEN
+            regConsul.Fecha := qFecha;
+        END;
+
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/TimestampPresentacion');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp presentaci¢n" := qDT;
+
+        regConsul."No. mov." := regConsul."No. mov."+1;
+        regConsul.INSERT;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+
+      PAGE.RUNMODAL(0, regConsul);
+    END;
+
+    PROCEDURE ProcesarContraste@1000000004(XMLDoc@1000000001 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000000 : Text[80];RegistroRespuesta@1000000012 : Text[80]);
+    VAR
+      Resultado@1000000003 : Text;
+      qTexto@1000000004 : Text;
+      qVal@1000000005 : Decimal;
+      qDT@1000000006 : DateTime;
+      qFecha@1000000007 : Date;
+      i@1000000011 : Integer;
+      regConsul@1000000014 : TEMPORARY Record 88206;
+      XMLNode@1000000010 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNode2@1000000008 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeList@1000000009 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      qInt@1000000013 : Integer;
+      TabDocSII@1000000002 : Record 88208;
+    BEGIN
+      FunSII.RemoveNamespace(XMLDoc, XMLDoc);
+      FunSII.GuardarXMLRes(XMLDoc);
+
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/ResultadoConsulta',XMLNode2) THEN
+        Resultado := COPYSTR(XMLNode2.InnerText,1,30);
+
+      IF Resultado = 'SinDatos' THEN BEGIN
+        MESSAGE(Text001);
+        EXIT;
+      END;
+
+      // Coger los datos de las facturas
+      TabDocSII.SETCURRENTKEY(CSV);
+      qTexto := RegistroRespuesta;
+      XMLNodeList := XMLDoc.GetElementsByTagName(qTexto);
+      i := 0;
+      XMLNode := XMLNodeList.Item(i);
+      WHILE NOT ISNULL(XMLNode) DO BEGIN
+        XMLNode2 := XMLNode.SelectSingleNode('DatosPresentacion/CSV');
+        IF NOT ISNULL(XMLNode2) THEN
+          regConsul.CSV := COPYSTR(XMLNode2.InnerText,1,MAXSTRLEN(regConsul.CSV))
+        ELSE
+          regConsul.CSV := '';
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/EstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qInt, XMLNode2.InnerText) THEN
+            regConsul."Estado cuadre" := qInt;
+
+        XMLNode2 := XMLNode.SelectSingleNode('EstadoFactura/TimestampEstadoCuadre');
+        IF NOT ISNULL(XMLNode2) THEN
+          IF EVALUATE(qDT, XMLNode2.InnerText) THEN
+            regConsul."Timestamp ultima modificacion" := qDT;
+
+        // Buscamos el registro que cumpla los filtros y lo actualizamos
+        IF regConsul.CSV <> '' THEN BEGIN
+          TabDocSII.SETRANGE(CSV, regConsul.CSV);
+          IF TabDocSII.FIND('-') THEN BEGIN
+             TabDocSII."Estado cuadre"    := regConsul."Estado cuadre";
+             TabDocSII."Timestamp cuadre" := regConsul."Timestamp cuadre";
+             TabDocSII.MODIFY;
+          END;
+        END;
+
+        i := i + 1;
+        XMLNode := XMLNodeList.Item(i);
+      END;
+    END;
+
+    PROCEDURE CogerURL@1000000032(TipoEnvio@1000000000 : 'Emitidos,Recibidos,BienesInv,Cobros,Pagos,OpIntra,CobMetalico') : Text[250];
+    VAR
+      URL@1000000001 : Text[250];
+    BEGIN
+      IF FunSII.DevEnPruebas THEN BEGIN
+        CASE TipoEnvio OF
+          TipoEnvio::Emitidos    : URL := URL_WS7_FE;
+          TipoEnvio::Recibidos   : URL := URL_WS7_FR;
+          TipoEnvio::BienesInv   : URL := URL_WS7_BI;
+          TipoEnvio::Cobros      : URL := URL_WS7_CE;
+          TipoEnvio::Pagos       : URL := URL_WS7_PR;
+          TipoEnvio::OpIntra     : URL := URL_WS7_OI;
+          TipoEnvio::CobMetalico : URL := URL_WS7_CM;
+        END;
+      END ELSE BEGIN
+        CASE TipoEnvio OF
+          TipoEnvio::Emitidos    : URL := URL_WS1_FE;
+          TipoEnvio::Recibidos   : URL := URL_WS1_FR;
+          TipoEnvio::BienesInv   : URL := URL_WS1_BI;
+          TipoEnvio::Cobros      : URL := URL_WS1_CE;
+          TipoEnvio::Pagos       : URL := URL_WS1_PR;
+          TipoEnvio::OpIntra     : URL := URL_WS1_OI;
+          TipoEnvio::CobMetalico : URL := URL_WS1_CM;
+        END;
+      END;
+      EXIT(URL);
+    END;
+
+    PROCEDURE CogerCertificado@1000000035(VAR Cert@1000000013 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2" RUNONCLIENT;CfgSII@1000000000 : Record 88201;VAR FaultCode@1000000012 : Text;VAR FaultString@1000000011 : Text) : Boolean;
+    VAR
+      Store@1000000008 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Store" RUNONCLIENT;
+      StoreName@1000000007 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.StoreName" RUNONCLIENT;
+      StoreLocation@1000000006 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.StoreLocation" RUNONCLIENT;
+      OpenFlag@1000000005 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.OpenFlags" RUNONCLIENT;
+      findResult@1000000004 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509Certificate2Collection" RUNONCLIENT;
+      X509FindType@1000000003 : DotNet "'System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Security.Cryptography.X509Certificates.X509FindType" RUNONCLIENT;
+      encontrados@1000000002 : Integer;
+      ErrorCert@1000000001 : Boolean;
+    BEGIN
+      ErrorCert := FALSE;
+      IF CfgSII."Nombre certificado" <> '' THEN BEGIN
+        IF (CfgSII."Valido hasta" >= TODAY) OR (CfgSII."Valido hasta" = 0D) THEN BEGIN
+          Store := Store.X509Store(StoreName.My, StoreLocation.CurrentUser);
+          Store.Open(OpenFlag.ReadOnly);
+          findResult := Store.Certificates.Find(X509FindType.FindByThumbprint, CfgSII."Huella digital", TRUE);
+          IF findResult.Count = 1 THEN BEGIN
+            Cert := findResult.Item(0);
+          END ELSE BEGIN
+            FaultString := STRSUBSTNO(Err002, CfgSII."Huella digital");
+            IF GUIALLOWED THEN
+              ERROR(Error2, Err003, FaultString)
+            ELSE BEGIN
+              FaultCode   := Err003;
+              ErrorCert := TRUE;
+            END;
+          END;
+        END ELSE BEGIN
+          FaultString := STRSUBSTNO(Err004, CfgSII."Valido hasta");
+          IF GUIALLOWED THEN
+            ERROR(Error2, Err003, FaultString)
+          ELSE BEGIN
+            FaultCode   := Err003;
+            ErrorCert := TRUE;
+          END;
+        END;
+      END ELSE BEGIN
+        FaultString := Err005;
+        IF GUIALLOWED THEN
+          ERROR(Error2, Err003, FaultString)
+        ELSE BEGIN
+          FaultCode := Err003;
+          ErrorCert := TRUE;
+        END;
+      END;
+
+      EXIT(NOT ErrorCert);
+    END;
+
+    BEGIN
+    {
+      //  Cert := Cert.X509Certificate2('C:\Paso\gestalia2018.pfx', '*******');
+
+      Credential := Credential.NetworkCredential;
+      Credential.UserName := 'myusr';
+      Credential.Password := 'mypwd';
+
+      FindURL := 'https://mycomp.metasomething.com/dm/services/ConsignmentTrackingService?method=findParcelTrackingByConsignmentCode&consignmentCode=';
+      FindURL+='myitemcode';
+
+      HttpWebRequest := HttpWebRequest.Create(FindURL);
+      HttpWebRequest.Timeout := 30000;
+      HttpWebRequest.UseDefaultCredentials(FALSE);
+      HttpWebRequest.Credentials := Credential;
+      HttpWebRequest.Method := 'POST';
+      HttpWebRequest.ContentType := 'text/xml; charset=utf-8';
+      HttpWebRequest.Accept := 'text/xml';
+
+      MemoryStream := HttpWebRequest.GetRequestStream;
+      XMLRequestDoc := XMLRequestDoc.XmlDocument;
+      XMLRequestDoc.Save(MemoryStream);
+      MemoryStream.Flush;
+      MemoryStream.Close;
+
+      HttpWebResponse := HttpWebRequest.GetResponse;
+      IF HttpWebStatus.Equals(HttpWebResponse.StatusCode,HttpWebStatus.OK) THEN BEGIN
+      MemoryStream := HttpWebResponse.GetResponseStream;
+
+      XMLResponseDoc := XMLResponseDoc.XmlDocument;
+      XMLResponseDoc.Load(MemoryStream);
+      MemoryStream.Flush;
+      MemoryStream.Close;
+    }
+    END.
+  }
+}
+
