@@ -2,8 +2,8 @@ OBJECT Page 88201 Documentos Emitidos SII
 {
   OBJECT-PROPERTIES
   {
-    Date=22/07/17;
-    Time=11:58:13;
+    Date=25/07/17;
+    Time=20:17:42;
     Modified=Yes;
     Version List=SII;
   }
@@ -417,6 +417,12 @@ OBJECT Page 88201 Documentos Emitidos SII
 
     { 1000000054;2;Field  ;
                 SourceExpr="Fecha factura corregida" }
+
+    { 1000000060;2;Field  ;
+                SourceExpr="Base rectificada" }
+
+    { 1000000061;2;Field  ;
+                SourceExpr="Cuota rectificada" }
 
     { 1000000051;2;Field  ;
                 SourceExpr="Emitida por terceros" }

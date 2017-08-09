@@ -2,8 +2,8 @@ OBJECT Report 88201 Procesar Movs. IVA SII
 {
   OBJECT-PROPERTIES
   {
-    Date=25/07/17;
-    Time=19:17:03;
+    Date=01/08/17;
+    Time=18:45:54;
     Modified=Yes;
     Version List=SII;
   }
@@ -72,8 +72,10 @@ OBJECT Report 88201 Procesar Movs. IVA SII
                                     memIntSII."Fecha documento":= "Document Date";
 
                                     IF Type = Type::Sale THEN BEGIN
-                                      IF BuscarSerieExcluir("VAT Entry", 0) THEN
+                                      IF BuscarSerieExcluir("VAT Entry", 0) THEN BEGIN
+                                        NumDoc := '';
                                         CurrReport.SKIP;
+                                      END;
                                       memIntSII.TipoSII := memIntSII.TipoSII::E;
                                       memIntSII."Clave operacion" := Get_CO_DocEmitido("VAT Entry", TxtError);
                                       IF TxtError <> '' THEN BEGIN
@@ -214,8 +216,10 @@ OBJECT Report 88201 Procesar Movs. IVA SII
                                     END;
 
                                     IF Type = Type::Purchase THEN BEGIN
-                                      IF BuscarSerieExcluir("VAT Entry", 1) THEN
+                                      IF BuscarSerieExcluir("VAT Entry", 1) THEN BEGIN
+                                        NumDoc := '';
                                         CurrReport.SKIP;
+                                      END;
                                       memIntSII.TipoSII := memIntSII.TipoSII::R;
                                       memIntSII."Clave operacion" := Get_CO_DocRecibido("VAT Entry", TxtError);
                                       IF TxtError <> '' THEN BEGIN
@@ -1194,6 +1198,8 @@ OBJECT Report 88201 Procesar Movs. IVA SII
         "VAT Entry".CHANGECOMPANY(qEmpresa);
         TabLinDocus.CHANGECOMPANY(qEmpresa);
         CfgSII.CHANGECOMPANY(qEmpresa);
+        DocIntEmitido.CHANGECOMPANY(qEmpresa);
+        DocIntEmitidoLin.CHANGECOMPANY(qEmpresa);
         Series.CHANGECOMPANY(qEmpresa);
       END;
     END;

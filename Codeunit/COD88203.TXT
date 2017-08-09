@@ -2,8 +2,8 @@ OBJECT Codeunit 88203 Generacion XML SII
 {
   OBJECT-PROPERTIES
   {
-    Date=21/07/17;
-    Time=17:44:52;
+    Date=28/07/17;
+    Time=14:30:52;
     Modified=Yes;
     Version List=SII;
   }
@@ -594,8 +594,7 @@ OBJECT Codeunit 88203 Generacion XML SII
                  CurrNode := NewChild;
                    AddElementWithPrefix(CurrNode, 'TipoImpositivo', MemFacturaE.IVA, 'sii', xmlns_sii, NewChild);
                    AddElementWithPrefix(CurrNode, 'BaseImponible', ConvDec2Str(MemFacturaE.BaseIVA, 2), 'sii', xmlns_sii, NewChild);
-                   IF NOT Es1S2017 THEN
-                     AddElementWithPrefix(CurrNode, 'CuotaSoportada', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii, NewChild);
+                   AddElementWithPrefix(CurrNode, 'CuotaSoportada', ConvDec2Str(MemFacturaE.ImporteIVA, 2), 'sii', xmlns_sii, NewChild);
                  CurrNode := CurrNode.ParentNode;
                UNTIL MemFacturaE.NEXT = 0;
                CurrNode := CurrNode.ParentNode;
@@ -1386,7 +1385,7 @@ OBJECT Codeunit 88203 Generacion XML SII
 
     PROCEDURE GenCabCobroEmitidas@1000000060();
     BEGIN
-      GenCabecera(Node, 'A0', 'SuministroLRCobrosEmitidas');
+      GenCabecera(Node, '', 'SuministroLRCobrosEmitidas');
     END;
 
     PROCEDURE GenDetCobroEmitidas@1000000059(TabDocSII@1000000000 : Record 88208);
@@ -1396,7 +1395,7 @@ OBJECT Codeunit 88203 Generacion XML SII
 
     PROCEDURE GenCabPagoRecibidas@1000000058();
     BEGIN
-      GenCabecera(Node, 'A0', 'SuministroLRPagosRecibidas');
+      GenCabecera(Node, '', 'SuministroLRPagosRecibidas');
     END;
 
     PROCEDURE GenDetPagoRecibidas@1000000057(TabDocSII@1000000000 : Record 88208);

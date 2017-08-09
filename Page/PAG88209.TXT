@@ -2,8 +2,8 @@ OBJECT Page 88209 Documentos Recibidos SII
 {
   OBJECT-PROPERTIES
   {
-    Date=22/07/17;
-    Time=11:58:29;
+    Date=28/07/17;
+    Time=14:10:00;
     Modified=Yes;
     Version List=SII;
   }
@@ -216,6 +216,14 @@ OBJECT Page 88209 Documentos Recibidos SII
                                  END;
                                END;
                                 }
+      { 1000000062;1 ;Separator  }
+      { 1000000061;1 ;Action    ;
+                      Name=Marcar como bien de inversion;
+                      OnAction=BEGIN
+
+                                 FunSII.CambiarBienInversionDocSII(Rec);
+                               END;
+                                }
       { 1000000013;1 ;ActionGroup;
                       Name=XML }
       { 1000000014;2 ;Action    ;
@@ -422,6 +430,12 @@ OBJECT Page 88209 Documentos Recibidos SII
 
     { 1000000053;2;Field  ;
                 SourceExpr="Fecha factura corregida" }
+
+    { 1000000059;2;Field  ;
+                SourceExpr="Base rectificada" }
+
+    { 1000000060;2;Field  ;
+                SourceExpr="Cuota rectificada" }
 
     { 1000000029;2;Field  ;
                 SourceExpr="Bien de inversion" }

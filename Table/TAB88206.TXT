@@ -2,8 +2,8 @@ OBJECT Table 88206 Series / Consultas SII
 {
   OBJECT-PROPERTIES
   {
-    Date=19/07/17;
-    Time=19:26:41;
+    Date=28/07/17;
+    Time=13:44:48;
     Modified=Yes;
     Version List=SII;
   }
@@ -110,7 +110,8 @@ OBJECT Table 88206 Series / Consultas SII
                                                                     ESP=" ,Series,Clientes,Excluir"];
                                                    OptionString=[ ,Series,Clientes,Excluir] }
     { 80  ;   ;Code                ;Code20        ;TableRelation=IF (Tipo registro=CONST(Series)) "No. Series"
-                                                                 ELSE IF (Tipo registro=CONST(Clientes)) Customer;
+                                                                 ELSE IF (Tipo registro=CONST(Clientes)) Customer
+                                                                 ELSE IF (Tipo registro=CONST(Excluir)) "No. Series";
                                                    OnValidate=BEGIN
                                                                 IF "Tipo registro" = "Tipo registro"::Clientes THEN
                                                                   "Tipo factura simplificada" := "Tipo factura simplificada"::F2;

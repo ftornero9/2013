@@ -2,8 +2,8 @@ OBJECT Codeunit 88202 WebService SII
 {
   OBJECT-PROPERTIES
   {
-    Date=02/07/17;
-    Time=12:29:16;
+    Date=28/07/17;
+    Time=10:07:08;
     Modified=Yes;
     Version List=SII;
   }
@@ -566,7 +566,7 @@ OBJECT Codeunit 88202 WebService SII
         DocSII.CHANGECOMPANY(qEmpresa);
       END;
 
-      Agrupado := DocSII.COUNT > 1;
+      Agrupado := (DocSII.COUNT > 1) AND CfgSII."Agrupar env¡os";
 
       IF recEnvios.FINDLAST THEN
         NMov := recEnvios."No. mov."
@@ -619,6 +619,7 @@ OBJECT Codeunit 88202 WebService SII
         recEnvios.CSV                        := GetCSV(XMLDoc2, Respuesta);
         recEnvios."Codigo Error"             := GetError(XMLDoc2, Respuesta);
         recEnvios."Descripcion Error"        := GetDescError(XMLDoc2, Respuesta);
+        recEnvios."Fecha expedicion factura" := GetFechaExp(XMLDoc2, Respuesta);
       END ELSE BEGIN
         recEnvios."Estado env¡o"             := 'Error';
         recEnvios."Timestamp presentaci¢n"   := CURRENTDATETIME;
@@ -796,6 +797,18 @@ OBJECT Codeunit 88202 WebService SII
     BEGIN
       IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/RespuestaLinea/DescripcionErrorRegistro',XMLNode) THEN
         EXIT(COPYSTR(XMLNode.InnerText,1,250));
+    END;
+
+    PROCEDURE GetFechaExp@1000000036(XMLDoc@1000000000 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";Respuesta@1000000002 : Text[80]) : Date;
+    VAR
+      XMLNode@1000000004 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      qFecha@1000000003 : Date;
+    BEGIN
+      qFecha := 0D;
+      IF FunSII.FindNode(XMLDoc,'//Envelope/Body/'+Respuesta+'/RespuestaLinea/IDFactura/FechaExpedicionFacturaEmisor',XMLNode) THEN
+        IF EVALUATE(qFecha, XMLNode.InnerText) THEN;
+
+      EXIT(qFecha);
     END;
 
     PROCEDURE GetEstado2@1000000029(paramXMLNode@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode") : Text[30];

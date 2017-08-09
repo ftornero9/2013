@@ -2,8 +2,8 @@ OBJECT Codeunit 88201 Funciones SII
 {
   OBJECT-PROPERTIES
   {
-    Date=15/07/17;
-    Time=23:30:51;
+    Date=28/07/17;
+    Time=14:08:28;
     Modified=Yes;
     Version List=SII;
   }
@@ -425,6 +425,13 @@ OBJECT Codeunit 88201 Funciones SII
 
       IF NoProcesar1S2017 AND (TabDocSII.Fecha < 010717D) THEN
         EXIT(FALSE);
+
+      IF TabDocSII.Fecha > TODAY THEN
+        EXIT(FALSE);
+
+      IF TabDocSII.TipoSII = TabDocSII.TipoSII::R THEN
+        IF TabDocSII."Fecha documento" > TODAY THEN
+          EXIT(FALSE);
 
       ComprobarPermisoSII;
 
@@ -2035,6 +2042,28 @@ OBJECT Codeunit 88201 Funciones SII
       //EnPruebas := TRUE;
 
       EXIT(EnPruebas);
+    END;
+
+    PROCEDURE CambiarBienInversionDocSII@1000000083(VAR TabDocSII@1000000000 : Record 88208);
+    VAR
+      Text001@1000000001 : TextConst 'ESP=Marcar el documento %1 como bien de inversi¢n';
+      Text002@1000000002 : TextConst 'ESP=Quitar el documento %1 de  bienes de inversi¢n';
+    BEGIN
+
+      qEmpresa := GblSII.GetGblEmpresa;
+
+      TabDocSII.TESTFIELD(Tipo,TabDocSII.Tipo::Factura);
+      TabDocSII.TESTFIELD(TipoSII,TabDocSII.TipoSII::R);
+
+      IF TabDocSII."Bien de inversion" THEN BEGIN
+        IF NOT CONFIRM(STRSUBSTNO(Text002,TabDocSII.Documento),FALSE) THEN
+          EXIT;
+      END ELSE
+        IF NOT CONFIRM(STRSUBSTNO(Text001,TabDocSII.Documento),FALSE) THEN
+          EXIT;
+
+      TabDocSII."Bien de inversion" := NOT TabDocSII."Bien de inversion";
+      TabDocSII.MODIFY;
     END;
 
     EVENT XMLDoc@1000000003::NodeInserting@94(sender@1000000001 : Variant;e@1000000000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");

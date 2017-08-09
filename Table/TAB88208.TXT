@@ -2,8 +2,8 @@ OBJECT Table 88208 Documentos SII
 {
   OBJECT-PROPERTIES
   {
-    Date=25/07/17;
-    Time=17:11:46;
+    Date=28/07/17;
+    Time=13:46:06;
     Modified=Yes;
     Version List=SII;
   }
@@ -147,7 +147,8 @@ OBJECT Table 88208 Documentos SII
                                                               ESP=Clave declarado intracomu.];
                                                    Description=D,R }
     { 28  ;   ;Base                ;Decimal       ;FieldClass=FlowField;
-                                                   CalcFormula=Sum("Lin. documentos SII".Base WHERE (NMovDoc=FIELD(NMov)));
+                                                   CalcFormula=Sum("Lin. documentos SII".Base WHERE (NMovDoc=FIELD(NMov),
+                                                                                                     Retencion=CONST(No)));
                                                    CaptionML=[ENU=Taxable base;
                                                               ESP=Base];
                                                    BlankZero=Yes;
@@ -176,11 +177,14 @@ OBJECT Table 88208 Documentos SII
                                                    MaxValue=9.999;
                                                    BlankZero=Yes }
     { 36  ;   ;Base rectificada    ;Decimal       ;CaptionML=[ENU=Rectified taxable base;
-                                                              ESP=Base rectificada] }
+                                                              ESP=Base rectificada];
+                                                   BlankZero=Yes }
     { 37  ;   ;Cuota rectificada   ;Decimal       ;CaptionML=[ENU=Rectified fee;
-                                                              ESP=Cuota rectificada] }
+                                                              ESP=Cuota rectificada];
+                                                   BlankZero=Yes }
     { 38  ;   ;Recargo rectificada ;Decimal       ;CaptionML=[ENU=Rectified surcharge;
-                                                              ESP=Recargo rectificada] }
+                                                              ESP=Recargo rectificada];
+                                                   BlankZero=Yes }
     { 39  ;   ;No enviar           ;Boolean       ;CaptionML=[ENU=Don't send;
                                                               ESP=No enviar] }
     { 40  ;   ;Base no realizada   ;Decimal       ;FieldClass=FlowField;
@@ -234,7 +238,7 @@ OBJECT Table 88208 Documentos SII
     { 61  ;   ;Factura resumen fin ;Code20        ;CaptionML=[ENU=End summary invoice;
                                                               ESP=Factura resumen fin];
                                                    Description=TipoFactura = F4 }
-    { 65  ;   ;DocumentoPago       ;Text35         }
+    { 65  ;   ;DocumentoPago       ;Text35        ;Editable=No }
     { 70  ;   ;Cobro Metalico      ;Decimal       ;CaptionML=[ENU=Cash payment;
                                                               ESP=Cobro Metalico] }
     { 75  ;   ;Fecha expedicion factura;Date       }
